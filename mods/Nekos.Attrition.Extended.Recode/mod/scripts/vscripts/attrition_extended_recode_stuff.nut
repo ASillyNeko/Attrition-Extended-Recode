@@ -90,7 +90,8 @@ void function AttritionExtendedRecode_Init()
     AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "unpiloted_titan_count", "0" )
     AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "titan_spawn_score", "0" )
     #if SERVER
-	AddDamageByCallback( "npc_titan", PilotTitanExecution ) // titan execution :D
+	AddDamageByCallback( "npc_titan", PilotTitanExecution )
+    AddDamageByCallback( "npc_pilot_elite", PilotExecution )
 	AddDamageCallback( "npc_titan", NPCNOPAIN )
 	AddDamageCallback( "npc_pilot_elite", NPCNOPAIN )
 	AddDamageCallbackSourceID( eDamageSourceId.auto_titan_melee, ApplyNormalMeleeIdToNPCTitan )
@@ -152,10 +153,9 @@ void function PilotTitanExecution( entity ent, var damageInfo )
 void function PilotTitanExecution_thread( entity ent, var damageInfo )
 {
     int damageType = DamageInfo_GetCustomDamageType( damageInfo )
-	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 
-		if ( !IsAlive( ent ) || !attacker || ent.GetTeam() == attacker.GetTeam() || attacker == ent || !ent.IsTitan() || ent.IsInvulnerable() )
+	if ( !IsAlive( ent ) || !attacker || ent.GetTeam() == attacker.GetTeam() || attacker == ent || !ent.IsTitan() || ent.IsInvulnerable() )
 		return
 
 	entity soul = ent.GetTitanSoul()
@@ -165,7 +165,7 @@ void function PilotTitanExecution_thread( entity ent, var damageInfo )
 		{
 			if ( attacker in file.pilotedtitan && file.pilotedtitan[ attacker ] && CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) )
 			{
-				if ( GetDoomedState( ent ) && !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) && !ent.IsPhaseShifted() && TitanCanSurviveDamage( ent, damageInfo ) )
+				if ( GetDoomedState( ent ) && !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) && !ent.IsPhaseShifted() && CanSurviveDamage( ent, damageInfo ) )
 				{
 					vector attackerStartingAngles = attacker.GetAngles()
 					PilotTitanExecution_DamageEnemy( ent, damageInfo )
@@ -220,12 +220,41 @@ void function PilotTitanExecution_Wait( entity attacker, vector attackerStarting
     attacker.EndSignal( "OnDestroy" )
     attacker.EndSignal( "OnDeath" )
     WaitFrame()
-    while( attacker.Anim_IsActive() )
+    while ( attacker.Anim_IsActive() )
         WaitFrame()
     vector angles = attacker.GetAngles()
     angles.x = attackerStartingAngles.x
     angles.z = attackerStartingAngles.z
     attacker.SetAngles( angles )
+}
+
+void function PilotExecution( entity ent, var damageInfo )
+{
+    thread PilotExecution_thread( ent, damageInfo )
+}
+
+void function PilotExecution_thread( entity ent, var damageInfo )
+{
+    int damageType = DamageInfo_GetCustomDamageType( damageInfo )
+	entity attacker = DamageInfo_GetAttacker( damageInfo )
+
+	if ( !IsAlive( ent ) || !attacker || ent.GetTeam() == attacker.GetTeam() || attacker == ent || ent.IsTitan() || ent.IsInvulnerable() )
+	    return
+
+	if ( attacker.IsNPC() && attacker.GetClassName() == "npc_pilot_elite" )
+	{
+		if ( ( damageType & DF_MELEE ) )
+		{
+			if ( CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && !ent.Anim_IsActive() )
+			{
+				if ( !(ent.IsPlayer() && PlayerCanSee( ent, attacker, true, 75 ) || ent.IsNPC() && ent.CanSee( attacker )) )
+				{
+					DamageInfo_SetDamage( damageInfo, 0 )
+					waitthread PlayerTriesSyncedMelee( attacker, ent )
+				}
+			}
+		}
+	}
 }
 
 void function NPCNOPAIN( entity npc, var damageInfo )
@@ -311,7 +340,7 @@ void function PilotTitanAutoOrDeathEjectHandle( entity titan, var damageInfo )
 
 	if ( titan in file.pilotedtitan && file.pilotedtitan[ titan ] && ( (titan in file.deatheject && file.deatheject[titan]) || (titan in file.autoeject && file.autoeject[titan]) ) )
 	{
-		if ( !TitanCanSurviveDamage( titan, damageInfo ) || (titan in file.autoeject && file.autoeject[titan] && GetDoomedState( titan )) )
+		if ( !CanSurviveDamage( titan, damageInfo ) || (titan in file.autoeject && file.autoeject[titan] && GetDoomedState( titan )) )
 		{
 		    if ( (titan in file.deatheject && file.deatheject[titan]) && !(titan in file.autoeject && file.autoeject[titan]) )
 			DamageInfo_SetDamage( damageInfo, 0 )
@@ -348,7 +377,7 @@ void function EjectWhenDoomed_thread( entity titan )
     soul.EndSignal( "OnDestroy" )
     soul.EndSignal( "OnDeath" )
 
-    wait 4.0 
+    wait 2.25 
 
     while ( soul.IsDoomed() && titan in file.pilotedtitan && file.pilotedtitan[ titan ] )
     {
@@ -410,7 +439,7 @@ int function GetTitanValidHealthFromDamageInfo( entity titan, var damageInfo )
     return healthShield
 }
 
-bool function TitanCanSurviveDamage( entity titan, var damageInfo )
+bool function CanSurviveDamage( entity titan, var damageInfo )
 {
     int damage = int( DamageInfo_GetDamage( damageInfo ) )
     int validHealth = GetTitanValidHealthFromDamageInfo( titan, damageInfo )
@@ -542,7 +571,7 @@ void function PilotSpeedFlagsHPAndBehavior( entity npc )
     thread OnFlagChanged( npc, flags )
 
     array <int> disableflags
-    disableflags.extend( [ NPC_PAIN_IN_SCRIPTED_ANIM ] )
+    disableflags.extend( [ NPC_PAIN_IN_SCRIPTED_ANIM, NPC_ALLOW_FLEE ] )
     thread OnFlagChanged( npc, disableflags, true )
 
     npc.SetMaxHealth( 750 )
@@ -795,7 +824,7 @@ void function MonitorTitanCore( entity npc )
     
     while( true )
     {
-        SoulTitanCore_SetNextAvailableTime( soul, 0.4 )
+        SoulTitanCore_SetNextAvailableTime( soul, 0.6 )
         npc.WaitSignal( "CoreBegin" )
         npc.WaitSignal( "CoreEnd" )
     }

@@ -1052,6 +1052,8 @@ string function GetVictimSyncedMeleeTargetType( entity ent )
 SyncedMeleeChooser ornull function GetSyncedMeleeChooserForPlayerVsTarget( entity attacker, entity target )
 {
 	string attackerType = GetAttackerSyncedMelee( attacker )
+	if ( IsPilotElite( attacker ) )
+	    attackerType = "human"
 	string targetType = GetVictimSyncedMeleeTargetType( target )
 
 	if ( !( attackerType in file.syncedMeleeChoosers ) )

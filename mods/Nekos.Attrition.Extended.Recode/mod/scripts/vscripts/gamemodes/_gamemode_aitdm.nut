@@ -116,13 +116,13 @@ void function OnPlayerConnected( entity player )
 void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 {
 	// Basic checks
-	if ( victim == attacker || !( attacker.IsPlayer() || attacker.IsTitan() ) || GetGameState() != eGameState.Playing )
+	if ( victim == attacker || GetGameState() != eGameState.Playing )
 		return
 	// Hacked spectre filter
 	if ( victim.GetOwner() == attacker )
 		return
 	// NPC titans without an owner player will not count towards any team's score
-	if ( attacker.IsNPC() && attacker.IsTitan() && !IsValid( GetPetTitanOwner( attacker ) ) )
+	if ( attacker.IsNPC() && (attacker.IsTitan() && !AttritionExtendedRecode_TitanHasNpcPilot( attacker )) && !IsValid( GetPetTitanOwner( attacker ) ) && attacker.GetClassName() != "npc_pilot_elite" )
 		return
 	
 	// Split score so we can check if we are over the score max
@@ -154,7 +154,7 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 			playerScore = ScoreEvent_GetPointValue( GetScoreEvent( eventName ) )
 	}
 	
-	if ( victim.IsPlayer() )
+	if ( victim.IsPlayer() || victim.GetClassName() == "npc_pilot_elite" )
 		playerScore = 5
 	
 	// Player ejecting triggers this without the extra check
@@ -170,8 +170,11 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	
 	// Add score + update network int to trigger the "Score +n" popup
 	AddTeamScore( attacker.GetTeam(), teamScore )
-	attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, playerScore )
-	attacker.SetPlayerNetInt("AT_bonusPoints", attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
+	if ( attacker.IsPlayer() )
+	{
+	    attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, playerScore )
+	    attacker.SetPlayerNetInt("AT_bonusPoints", attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
+	}
 }
 
 // When attrition starts both teams spawn ai on preset nodes, after that
