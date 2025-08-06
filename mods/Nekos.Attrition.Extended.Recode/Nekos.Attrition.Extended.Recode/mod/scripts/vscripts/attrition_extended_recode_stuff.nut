@@ -101,7 +101,15 @@ void function AttritionExtendedRecode_Init()
 	AddDamageCallback( "npc_pilot_elite", PilotDamageAdjustments )
 	AddDamageCallback( "npc_titan", PilotTitanAutoOrDeathEjectHandle )
 	AddCallback_OnTitanDoomed( EjectWhenDoomed )
-    AddCallback_OnNPCKilled( HandleNPCScoreEvent )
+    try
+    {
+        if ( !IsValid( GetConVarInt( "ns_fd_min_numplayers_to_start" ) ) )
+            AddCallback_OnNPCKilled( HandleNPCScoreEvent )
+    }
+    catch( error )
+    {
+        AddCallback_OnNPCKilled( HandleNPCScoreEvent )
+    }
     #endif
 }
 #if SERVER
