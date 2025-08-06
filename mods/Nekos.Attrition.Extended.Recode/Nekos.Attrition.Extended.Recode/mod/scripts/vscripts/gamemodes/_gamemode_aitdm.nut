@@ -248,7 +248,7 @@ void function SpawnIntroBatch_Threaded( int team )
 			index = RandomInt( podNodes.len() )
 			
 			node = podNodes[ index ]
-			thread AiGameModes_SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, "npc_soldier", SquadHandler )
+			thread AiGameModes_SpawnDropPodModded( node.GetOrigin(), node.GetAngles(), team, "npc_soldier", SquadHandler )
 			
 			pods--
 		}
@@ -258,7 +258,7 @@ void function SpawnIntroBatch_Threaded( int team )
 			startIndex = i // save where we started
 			
 			node = shipNodes[ i - startIndex ]
-			thread AiGameModes_SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
+			thread AiGameModes_SpawnDropShipModded( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
 			
 			ships--
 		}
@@ -303,7 +303,7 @@ void function Spawner_Threaded( int team )
 			if ( reaperCount < file.reapersPerTeam )
 			{
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
-				waitthread AiGameModes_SpawnReaper( node.GetOrigin(), node.GetAngles(), team, "npc_super_spectre_aitdm", ReaperHandler )
+				waitthread AiGameModes_SpawnReaperModded( node.GetOrigin(), node.GetAngles(), team, "npc_super_spectre_aitdm", ReaperHandler )
 			}
 		}
 		
@@ -326,7 +326,7 @@ void function Spawner_Threaded( int team )
 			
 			points = SpawnPoints_GetDropPod()
 			entity node = points[ GetSpawnPointIndex( points, team ) ]
-			waitthread AiGameModes_SpawnDropPod( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
+			waitthread AiGameModes_SpawnDropPodModded( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
 		}
 		
 		WaitFrame()
@@ -355,7 +355,7 @@ void function AttritionExtendedRecode_Handle( int team )
 
 void function Aitdm_SpawnDropShip( entity node, int team )
 {
-	thread AiGameModes_SpawnDropShip( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
+	thread AiGameModes_SpawnDropShipModded( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
 	wait 20
 }
 
@@ -615,4 +615,138 @@ void function AITdm_CleanupBoredNPCThread( entity guy )
 	
 	print( "cleaning up bored npc: " + guy + " from team " + guy.GetTeam() )
 	guy.Destroy()
+}
+
+// Modded Stuff So It Supports Zanieon's Frontier Defense
+void function AiGameModes_SpawnDropShipModded( vector pos, vector rot, int team, int count, void functionref( array<entity> guys ) squadHandler = null )
+{  
+	string squadName = MakeSquadName( team, UniqueString( "" ) )
+
+	CallinData drop
+	drop.origin 		= pos
+	drop.yaw 			  = rot.y
+	drop.dist 			= 768
+	drop.team 			= team
+	drop.squadname 	= squadName
+	SetDropTableSpawnFuncs( drop, CreateSoldier, count )
+	SetCallinStyle( drop, eDropStyle.ZIPLINE_NPC )
+  
+	thread RunDropshipDropoff( drop )
+	
+	WaitSignal( drop, "OnDropoff" )
+	
+	array< entity > guys = GetNPCArrayBySquad( squadName )
+	
+	foreach ( guy in guys )
+		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+	
+	if ( squadHandler != null )
+		thread squadHandler( guys )
+}
+
+
+void function AiGameModes_SpawnDropPodModded( vector pos, vector rot, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( array<entity> guys ) squadHandler = null, int flags = 0 )
+{
+	entity pod = CreateDropPod( pos, <0,0,0> )
+	
+	InitFireteamDropPod( pod, flags )
+		
+	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, rot )
+
+	string squadName = MakeSquadName( team, UniqueString( "" ) )
+	array<entity> guys
+	for ( int i = 0; i < 4 ;i++ )
+	{
+		entity npc = CreateNPC( content, team, pos,<0,0,0> )
+		DispatchSpawn( npc )
+		SetSquad( npc, squadName )
+		
+		npc.SetParent( pod, "ATTACH", true )
+		
+		npc.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+		guys.append( npc )
+	}
+	
+	ActivateFireteamDropPod( pod, guys )
+
+	// start searching for enemies
+	if ( squadHandler != null )
+		thread squadHandler( guys )
+}
+
+const float REAPER_WARPFALL_DELAY = 4.7 // same as fd does
+void function AiGameModes_SpawnReaperModded( vector pos, vector rot, int team, string aiSettings = "", void functionref( entity reaper ) reaperHandler = null )
+{
+	float reaperLandTime = REAPER_WARPFALL_DELAY + 1.2 // reaper takes ~1.2s to warpfall
+	thread HotDrop_Spawnpoint( pos, team, reaperLandTime, false, damagedef_reaper_fall )
+
+	wait REAPER_WARPFALL_DELAY
+	entity reaper = CreateSuperSpectre( team, pos, rot )
+	reaper.EndSignal( "OnDestroy" )
+	// reaper highlight
+	Highlight_SetFriendlyHighlight( reaper, "sp_enemy_pilot" )
+	reaper.Highlight_SetParam( 1, 0, < 1,1,1 > )
+	SetDefaultMPEnemyHighlight( reaper )
+	Highlight_SetEnemyHighlight( reaper, "enemy_titan" )
+
+	SetSpawnOption_Titanfall( reaper )
+	SetSpawnOption_Warpfall( reaper )
+	
+	if ( aiSettings != "" )
+		SetSpawnOption_AISettings( reaper, aiSettings )
+	
+	HideName( reaper ) // prevent flash a name onto it
+	DispatchSpawn( reaper )
+
+	reaper.WaitSignal( "WarpfallComplete" )
+	ShowName( reaper ) // show name again after drop
+	
+	if ( reaperHandler != null )
+		thread reaperHandler( reaper )
+}
+
+// copied from cl_replacement_titan_hud.gnut
+void function HotDrop_Spawnpoint( vector origin, int team, float impactTime, bool hasFriendlyWarning = false, int damageDef = -1 )
+{
+	array<entity> targetEffects = []
+	vector surfaceNormal = < 0, 0, 1 >
+
+	int index = GetParticleSystemIndex( $"P_ar_titan_droppoint" )
+
+	if( hasFriendlyWarning )
+	{
+		entity effectFriendly = StartParticleEffectInWorld_ReturnEntity( index, origin, surfaceNormal )
+		SetTeam( effectFriendly, team )
+		EffectSetControlPointVector( effectFriendly, 1, FRIENDLY_COLOR_FX )
+		effectFriendly.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+		effectFriendly.DisableHibernation() // prevent it from fading out
+		targetEffects.append( effectFriendly )
+	}
+
+	entity effectEnemy = StartParticleEffectInWorld_ReturnEntity( index, origin, surfaceNormal )
+	SetTeam( effectEnemy, team )
+	EffectSetControlPointVector( effectEnemy, 1, ENEMY_COLOR_FX )
+	effectEnemy.kv.VisibilityFlags = ENTITY_VISIBLE_TO_ENEMY
+	effectEnemy.DisableHibernation() // prevent it from fading out
+	targetEffects.append( effectEnemy )
+
+	// so enemy npcs will mostly avoid them
+	entity damageAreaInfo
+	if ( damageDef > -1 )
+	{
+		damageAreaInfo = CreateEntity( "info_target" )
+		DispatchSpawn( damageAreaInfo )
+		AI_CreateDangerousArea_DamageDef( damageDef, damageAreaInfo, team, true, true )
+	}
+
+	wait impactTime
+
+	// clean up
+	foreach( entity targetEffect in targetEffects )
+	{
+		if ( IsValid( targetEffect ) )
+			EffectStop( targetEffect )
+	}
+	if ( IsValid( damageAreaInfo ) )
+		damageAreaInfo.Destroy()
 }
