@@ -397,11 +397,12 @@ void function EjectWhenDoomed_thread( entity titan )
     soul.EndSignal( "OnDestroy" )
     soul.EndSignal( "OnDeath" )
 
-    wait 2.25 
+    if ( !(titan in file.autoeject && file.autoeject[titan]) )
+        wait 2.25 
 
-    while ( soul.IsDoomed() && titan in file.pilotedtitan && file.pilotedtitan[ titan ] )
+    while ( soul.IsDoomed() )
     {
-        if ( !(titan in file.autoeject && file.autoeject[titan]) )
+        if ( !(titan in file.autoeject && file.autoeject[ titan ]) )
             wait 0.2
 
         float ejectRequiredDoomedHealth = 1250
@@ -422,9 +423,9 @@ void function EjectWhenDoomed_thread( entity titan )
                 shouldEjectTitan = true
         }
 
-        if ( shouldEjectTitan || (titan in file.autoeject && file.autoeject[titan]) )
+        if ( titan in file.pilotedtitan && file.pilotedtitan[ titan ] && (shouldEjectTitan || (titan in file.autoeject && file.autoeject[ titan ])) )
         {
-            if ( !titan.IsInvulnerable() || (titan in file.autoeject && file.autoeject[titan]) )
+            if ( !titan.IsInvulnerable() || (titan in file.autoeject && file.autoeject[ titan ]) )
             {
                 thread TitanEjectPlayerForNPCs( titan )
                 return
@@ -435,7 +436,7 @@ void function EjectWhenDoomed_thread( entity titan )
 
 void function HandleNPCScoreEvent( entity ent, entity attacker, var damageInfo )
 {
-    if ( !Is_AttritionExtendedRecode_Entity( ent ) )
+    if ( !ent.IsTitan() || !Is_AttritionExtendedRecode_Entity( ent ) )
         return
 
 	int attackerEHandle = ent.GetEncodedEHandle()
@@ -619,6 +620,8 @@ void function PilotSpeedFlagsHPAndBehavior( entity npc )
     npc.SetHealth( npc.GetMaxHealth() )
     npc.SetBehaviorSelector( "behavior_sp_soldier" )
     npc.SetEnemyChangeCallback( OnNPCPilotEnemyChange )
+
+    Highlight_SetEnemyHighlight( npc, "enemy_player" )
 }
 
 void function PilotMiniMap( entity npc )
@@ -1061,33 +1064,33 @@ void function PilotInTitanSet( entity titan )
                 titan.SetAISettings( "npc_titan_stryder_leadwall" )
                 titan.SetBehaviorSelector( "behavior_titan_shotgun" )
                 thread core( titan )
-                break;
+                break
             case "scorch":
                 titan.SetAISettings( "npc_titan_ogre_meteor" )
                 titan.SetBehaviorSelector( "behavior_titan_ogre_meteor" )
-                break;
+                break
             case "legion":
                 titan.SetAISettings( "npc_titan_ogre_minigun" )
                 titan.SetBehaviorSelector( "behavior_titan_ogre_minigun" )
                 titan.SetNPCMoveSpeedScale( 1.25 )
-                break;
+                break
             case "ion":
                 titan.SetAISettings( "npc_titan_atlas_stickybomb" )
                 titan.SetBehaviorSelector( "behavior_titan_long_range" )
-                break;
+                break
             case "tone":
                 titan.SetAISettings( "npc_titan_atlas_tracker" )
                 titan.SetBehaviorSelector( "behavior_titan_long_range" )
-                break;
+                break
             case "vanguard":
                 titan.SetAISettings( "npc_titan_atlas_vanguard" )
                 titan.SetBehaviorSelector( "behavior_titan_long_range" )
                 thread MonitorMonarchShield( titan )
-                break;
+                break
             case "northstar":
                 titan.SetAISettings( "npc_titan_stryder_sniper" )
                 titan.SetBehaviorSelector( "behavior_titan_sniper" )
-                break;
+                break
         }
         titan.SetCapabilityFlag( bits_CAP_SYNCED_MELEE_ATTACK, false )
         titan.EnableNPCMoveFlag( NPCMF_PREFER_SPRINT )
@@ -1974,7 +1977,7 @@ void function AutoTitanLoadout( entity titan )
                         GivePassive( soul, ePassives.PAS_VANGUARD_COREMETER )
                         soul.soul.titanLoadout.titanExecution = "execution_vanguard_kit"
                     }
-                    if ( SoulHasPassive( soul, ePassives.PAS_VANGUARD_COREMETER ) && RandomInt( 100 ) < 50 )
+                    if ( !SoulHasPassive( soul, ePassives.PAS_VANGUARD_COREMETER ) && RandomInt( 100 ) < 50 )
                         GivePassive( soul, ePassives.PAS_VANGUARD_DOOM )
                 }
                 break
@@ -2001,13 +2004,13 @@ void function AutoTitanLoadout( entity titan )
         }
 
         bool hasnucleareject = false
-        if ( RandomInt( 100 ) < 50 )
+        if ( RandomInt( 100 ) < 25 )
         {
             hasnucleareject = true
             NPC_SetNuclearPayload( titan )
         }
 
-        if ( hasnucleareject == false && RandomInt( 100 ) < 50 )
+        if ( !hasnucleareject && RandomInt( 100 ) < 10 )
             AttritionExtendedRecode_GiveTitanAutoEject( titan )
     }
 }
@@ -2133,6 +2136,44 @@ function AttritionExtendedRecode_NpcPilotEmbarksTitan( entity pilot, entity tita
 	waitthread PlayAnimGravity( titan, titanAnim )
 	SetStanceStand( titan.GetTitanSoul() )
 	AttritionExtendedRecode_NpcPilotBecomesTitan( pilot, titan )
+}
+
+void function NPCPilotEjectingAnimation( entity pilot )
+{
+	pilot.EndSignal( "OnDestroy" )
+	pilot.EndSignal( "OnDeath" )
+	
+	if ( !pilot.ContextAction_IsBusy() )
+		pilot.ContextAction_SetBusy()
+
+	pilot.Anim_ScriptedPlayActivityByName( "ACT_FALL", true, 0.2 )
+	pilot.SetNPCPriorityOverride( 10 )
+
+	OnThreadEnd
+	(
+		function(): ( pilot )
+		{
+			if ( IsValid( pilot ) )
+			{
+				if ( pilot.ContextAction_IsBusy() )
+					pilot.ContextAction_ClearBusy()
+				
+				pilot.Anim_Stop()
+				if ( IsAlive( pilot ) )
+					pilot.ClearNPCPriorityOverride()
+			}
+		}
+	)
+
+	float lastAnimPlayedTime = -1
+	float failSafeTime = Time() + 6.0
+	while( Time() < failSafeTime )
+	{
+		if ( pilot.IsOnGround() && pilot.GetVelocity().z <= 0 )
+			break
+		
+		WaitFrame()
+	}
 }
 
 const TITAN_PLAYEREJECT_DELAY = 0.4
@@ -2875,8 +2916,11 @@ function TitanEjectPlayerForNPCs( entity ejectTitan, bool instant = false )
         {
         e.npcPilot = AttritionExtendedRecode_NpcTitanBecomesPilot( ejectTitan )
         entity npcPilot = expect entity( e.npcPilot )
-        if ( IsAlive( npcPilot ) )
-            npcPilot.SetInvulnerable()
+            if ( IsAlive( npcPilot ) )
+            {
+                npcPilot.SetInvulnerable()
+                thread NPCPilotEjectingAnimation( npcPilot )
+            }
         }
 
     vector titanOrigin = titan.GetOrigin()
