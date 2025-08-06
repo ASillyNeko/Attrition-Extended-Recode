@@ -1,0 +1,27 @@
+{
+	"Name": "Neko's Attrition Extended Recode",
+	"Description": "Put Auto Titans In Attrition And Give Them The Ability To Execute Other Titans And This Is What You Get",
+	"Version": "1.0.3",
+	"LoadPriority": 21,
+	"Dependencies": {
+		"AIRBORNE_EXECUTIONS_THING": "Airborne Executions"
+	},
+	"Scripts": [
+		{
+			"Path": "karma_airborne_execution_attritionextendedrecode.nut",
+			"RunOn": "CLIENT || SERVER"
+		},
+		{
+			"Path": "attrition_extended_recode_stuff.nut",
+			"RunOn": "CLIENT || SERVER",
+			"ServerCallback":
+			{
+				"After": "AttritionExtendedRecode_Init"
+			},
+			"ClientCallback":
+			{
+				"After": "AttritionExtendedRecode_Init"
+			}
+		}
+	]
+}
