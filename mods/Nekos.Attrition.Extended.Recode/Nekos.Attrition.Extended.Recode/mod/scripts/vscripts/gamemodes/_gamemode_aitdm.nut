@@ -30,6 +30,7 @@ struct
 	int levelSpectres = LEVEL_SPECTRES
 	int levelStalkers = LEVEL_STALKERS
 	int levelReapers = LEVEL_REAPERS
+	table< string, array<string> > weapons
 } file
 
 void function GamemodeAITdm_Init()
@@ -48,15 +49,19 @@ void function GamemodeAITdm_Init()
 	
 	if ( GetCurrentPlaylistVarInt( "aitdm_archer_grunts", 0 ) == 0 )
 	{
-		AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ] )
-		AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ] )
-		AiGameModes_SetNPCWeapons( "npc_stalker", [ "mp_weapon_hemlok_smg", "mp_weapon_lstar", "mp_weapon_mastiff" ] )
+		file.weapons = {
+			["npc_soldier"] = [ "mp_weapon_rspn101", "mp_weapon_dmr", "mp_weapon_r97", "mp_weapon_lmg" ],
+			["npc_spectre"] = [ "mp_weapon_hemlok_smg", "mp_weapon_doubletake", "mp_weapon_mastiff" ],
+			["npc_stalker"] = [ "mp_weapon_hemlok_smg", "mp_weapon_lstar", "mp_weapon_mastiff" ]
+		}
 	}
 	else
 	{
-		AiGameModes_SetNPCWeapons( "npc_soldier", [ "mp_weapon_rocket_launcher" ] )
-		AiGameModes_SetNPCWeapons( "npc_spectre", [ "mp_weapon_rocket_launcher" ] )
-		AiGameModes_SetNPCWeapons( "npc_stalker", [ "mp_weapon_rocket_launcher" ] )
+		file.weapons = {
+			["npc_soldier"] = [ "mp_weapon_rocket_launcher" ],
+			["npc_spectre"] = [ "mp_weapon_rocket_launcher" ],
+			["npc_stalker"] = [ "mp_weapon_rocket_launcher" ]
+		}
 	}
 	
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
@@ -618,6 +623,29 @@ void function AITdm_CleanupBoredNPCThread( entity guy )
 }
 
 // Modded Stuff So It Supports Zanieon's Frontier Defense
+void function SetUpNPCWeapons( entity guy )
+{
+	string className = guy.GetClassName()
+	
+	array<string> mainWeapons
+	if ( className in file.weapons )
+		mainWeapons = file.weapons[ className ]
+	
+	if ( mainWeapons.len() == 0 ) // no valid weapons
+		return
+
+	// take off existing main weapons, or sometimes they'll have a archer by default
+	foreach ( entity weapon in guy.GetMainWeapons() )
+		guy.TakeWeapon( weapon.GetWeaponClassName() )
+
+	if ( mainWeapons.len() > 0 )
+	{
+		string weaponName = mainWeapons[ RandomInt( mainWeapons.len() ) ]
+		guy.GiveWeapon( weaponName )
+		guy.SetActiveWeaponByName( weaponName )
+	}
+}
+
 void function AiGameModes_SpawnDropShipModded( vector pos, vector rot, int team, int count, void functionref( array<entity> guys ) squadHandler = null )
 {  
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
@@ -638,7 +666,10 @@ void function AiGameModes_SpawnDropShipModded( vector pos, vector rot, int team,
 	array< entity > guys = GetNPCArrayBySquad( squadName )
 	
 	foreach ( guy in guys )
+	{
+		SetUpNPCWeapons( guy )
 		guy.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
+	}
 	
 	if ( squadHandler != null )
 		thread squadHandler( guys )
@@ -660,7 +691,9 @@ void function AiGameModes_SpawnDropPodModded( vector pos, vector rot, int team, 
 		entity npc = CreateNPC( content, team, pos,<0,0,0> )
 		DispatchSpawn( npc )
 		SetSquad( npc, squadName )
-		
+
+        SetUpNPCWeapons( npc )
+
 		npc.SetParent( pod, "ATTACH", true )
 		
 		npc.EnableNPCFlag( NPC_ALLOW_PATROL | NPC_ALLOW_INVESTIGATE | NPC_ALLOW_HAND_SIGNALS | NPC_ALLOW_FLEE )
