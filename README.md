@@ -52,6 +52,6 @@ Or
     CustomTitan.Passives = [ePassives.PAS_VANGUARD_COREMETER]
     CustomTitan.HP = -1`
 
-The Ones That Are [] Should Be Like ["1","2","3"] And The Passives One Should Be Like [1,2,3]
+The Ones That Are [] Should Be Like ["1","2","3"] And The Passives One Should Be Like [1,2,3]/[ePassives.PAS_VANGUARD_COREMETER,ePassives.PAS_VANGUARD_DOOM]
 
 Also Title TitanSetFile TitanAiSet TitanBehavior EmbarkedTitanAiSet EmbarkedTitanBehavior and TitanExecutionRef Must Be Set
