@@ -145,7 +145,7 @@ void function AttritionExtendedRecode_Init()
     {
         AddCallback_OnNPCKilled( HandleNPCScoreEvent )
     }
-    AttritionExtendedRecode_CustomTitanCommand( "ASillyNeko", "titan_atlas_vanguard", "npc_titan_auto_atlas_vanguard", "", "npc_titan_atlas_vanguard", "behavior_titan_long_range", "execution_vanguard_kit", 138, 2, true, false, "melee_titan_punch", [], "mp_titanweapon_xo16_vanguard", [], "mp_titanweapon_salvo_rockets", [], "mp_titanability_rearm", [], "mp_titanweapon_stun_laser", [], "mp_titancore_upgrade", [], [ePassives.PAS_VANGUARD_COREMETER] )
+    AttritionExtendedRecode_CustomTitanCommand( "ASillyNeko", "titan_atlas_vanguard", "npc_titan_auto_atlas_vanguard", "", "npc_titan_atlas_vanguard", "behavior_titan_long_range", "execution_vanguard_kit", 138, 2, true, false, "melee_titan_punch", [], "mp_titanweapon_xo16_vanguard", [], "mp_titanweapon_salvo_rockets", [], "mp_titanability_rearm", [], "mp_titanweapon_stun_laser", [], "mp_titancore_upgrade", [], [ePassives.PAS_VANGUARD_COREMETER], -1 )
     #endif
 }
 #if SERVER
@@ -1474,7 +1474,7 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
         entitynpc.EnableNPCFlag( NPC_IGNORE_ALL )
         NPC_NoTarget( entitynpc )
         if ( CustomTitan.AllowedWithPilot )
-            entitynpc.SetTitle( "[CT]" + CustomTitan.Title )
+            entitynpc.SetTitle( "[CT] " + CustomTitan.Title )
         else
             entitynpc.SetTitle( "Pilot" )
         npcs.append( entitynpc )
@@ -1551,7 +1551,7 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
     DispatchSpawn( titan )
     if ( CustomTitan.AllowedWithoutPilot )
     {
-        titan.SetTitle( "[CT]" + CustomTitan.Title )
+        titan.SetTitle( "[CT] " + CustomTitan.Title )
         file.CustomTitanUID[ titan ] <- CustomTitan.UID
         if ( CustomTitan.HP > 0 )
         {

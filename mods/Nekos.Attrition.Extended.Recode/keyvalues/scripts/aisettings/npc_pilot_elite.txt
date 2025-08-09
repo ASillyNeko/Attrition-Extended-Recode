@@ -1,0 +1,152 @@
+// note: this file has been fully reworked, most stuffs using grunt ones
+
+npc_pilot_elite
+{
+	HullType						"HULL_HUMAN"
+	AIClass							pilot_elite
+	BodyType						human
+	ArmorType						normal
+	TraverseAnimType				human
+
+	difficultTraverseFlags	256			// 1 << 8 (TRAVERSE_JUMP_UP_DOWN_128)
+
+	smartAmmoLockAttachmentName0	CHESTFOCUS
+
+	footstep_type					"grunt"
+
+	title							#NPC_PILOT
+	ui_targetinfo					"ui/targetinfo_npc_basic" [$mp]
+	ui_targetinfo					"ui/targetinfo_npc_basic" [$sp]
+
+	BaseClass						"npc_pilot_elite"
+
+	DefaultModelName				"models/humans/pilots/sp_medium_reaper_m.mdl"
+	DefaultWeapon					"mp_weapon_r97"
+	BehaviorSelector				"behavior_pilot_elite"
+
+	Health							250 [$sp]
+	Health							250 [$mp]
+
+	// modified: make npc pilots no longer able to be knocked down
+	PainOnHeavyDamageThreshold		250 // vanilla uses 250, first version uses 99999
+	breakOutOfPainDamageThreshold	150 // vanilla uses 150, first version uses 99999
+	PainOnRepeatDamageThreshold		300 // vanilla uses 300, first version uses 99999
+
+	AimAngularSpeed					10
+
+	allowUseCover					1 // vanilla enables this, may make them less likely to assault target
+	allowFlee				1
+	allowInvestigate		1
+	allowPatrol				1
+	allowSignals			1
+
+	YawSpeed						30
+	MoveYawSpeed					30
+	MinForceWalkDist		150
+	MinStartMoveDist		100
+
+	aimassist_adspull_centerAttachmentName		"CHESTFOCUS"
+	aimassist_adspull_centerRadius				11.0
+	aimassist_adspull_headshotAttachmentName	"HEADSHOT"
+	aimassist_adspull_headshotRadius			13.0
+
+	crouchCombatDistInner	500
+	crouchCombatDistOuter	650
+
+	FOV_Alert_Far_Horz		100
+	FOV_Alert_Far_Vert		60
+	FOV_Alert_Near_Horz		180
+	FOV_Alert_Near_Vert		100
+	FOV_Combat_Far_Horz		100
+	FOV_Combat_Far_Vert		60
+	FOV_Combat_Near_Horz	180
+	FOV_Combat_Near_Vert	80
+	FOV_Idle_Far_Horz		80
+	FOV_Idle_Far_Vert		60
+	FOV_Idle_Near_Horz		170
+	FOV_Idle_Near_Vert		80
+
+	NoticeForgetPostTime	5.0
+	NoticeForgetPreTime		1.0
+
+	NoticeDistNear_Alert	300
+	NoticeDistNear_Combat	300
+	NoticeDistNear_Idle		150
+	NoticeDistFar_Alert		1800
+	NoticeDistFar_Combat	2500
+	NoticeDistFar_Idle		1500
+	NoticeTimeNear_Alert	0.2
+	NoticeTimeNear_Combat	0.1
+	NoticeTimeNear_Idle		0.5
+	NoticeTimeFar_Alert		0.75
+	NoticeTimeFar_Combat	0.5
+	NoticeTimeFar_Idle		2.0
+	NoticeTimePeripheral_Alert	1.0
+	NoticeTimePeripheral_Combat 0.75
+	NoticeTimePeripheral_Idle	2.0
+
+	FOV_Near_Dist			150		// distance at which we transition between near and far FOV values
+	FOV_Far_Dist			2000	// use far values after this distance, interpolate horizontal in between, use far for vertical
+	FOV_Vert_Offset			-20		// looking down instead of up... better for pilots on high ground feeling
+
+	faceEnemyWhileMovingDist		1000
+
+	MeleeDamageMin					70 // vanilla uses 70, too high for a character...
+	MeleeDamageMax					80 // vanilla uses 80, too high for a character...
+	MeleeDamageRadius				60 // was 32, match MeleeRange or they can't hit standing targets, once used 90 but it can't match their model
+	MeleeRange						40 // was 80, which can't match their model, once used 60 but it can't match their model
+	MeleeDamageForce				15000
+	
+	// human melee charge is weird, disabled
+	//MeleeCosAngleRange				0.866	// 30 degrees
+	//MeleeChargeRange				220
+	//MeleeChargeDamageMin			180
+	//MeleeChargeDamageMax			200
+	//MeleeChargeDamageRadius			70
+	//MeleeChargeInterval				3
+	
+	MeleeInterval					0
+	// meaningless misc fix
+	//MeleeImpactEffectTable			"melee_spectre"
+	MeleeImpactEffectTable			"melee_human"
+
+	// we add something just for fun
+	landingImpactTable			"pilot_landing"
+	footstepImpactTable			"pilot_foostep"
+
+	//circleStrafeDist				500
+	//circleStrafeAngleIncrement		30
+
+	// they won't do chase if non of these behavior set up
+	chaseStopDist					250 // vanilla uses 16. this should be higher, pilot melee is deadly
+    chaseStopDistHeavyArmor			800 // vanilla uses 250. this should be higher, pilots can't resist to titans.
+
+	showFriendlyIcon				1
+	meleeable						1
+
+	magneticRange					125
+
+	// vanilla missing
+	headshotFX 						"P_headshot_pilot"
+	gibModel0						"models/gibs/human_gibs.mdl"
+
+	// taken from npc_pilot_elite_assassin
+	// works pretty bad, change to scripted handle
+	// welp, guess this is the only way we can make npc charge rifle breaks cloak
+	// EDIT: this won't work at all!
+	//decloakOnShoot					1
+
+	waitBetweenWeaponBurst			1
+	enemyAimAtMeWidth				100
+
+	aiEnemy_usePriorityDist			2000
+	aiEnemy_immediateThreatDist		230
+
+	braceWhenDangerousAreaDisplacementFails	1
+
+	// sequence "React_drop_crawl" 's activity is ACT_REACT_BULLET_FAR
+	// so these might be the things that makes pilots crawl and become vulnerable?
+	//reactChanceDefault					90
+	//reactBulletChanceDefault			90
+	//reactFriendlyChanceDefault			0
+}
