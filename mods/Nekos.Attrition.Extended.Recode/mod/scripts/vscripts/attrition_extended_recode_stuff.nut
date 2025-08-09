@@ -1599,17 +1599,36 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 void function TillDeath( entity titan, bool withpilot )
 {
     int team = titan.GetTeam()
-    titan.EndSignal( "OnDestroy" )
-    OnThreadEnd(
-        function () : ( team, withpilot )
+    while ( true )
+    {
+        if ( !IsValid( titan ) )
         {
             if ( withpilot && team in file.spawnedpilotedtitans )
                 file.spawnedpilotedtitans[ team ] <- file.spawnedpilotedtitans[ team ] - 1
             else if ( !withpilot && team in file.spawnedunpilotedtitans )
                 file.spawnedunpilotedtitans[ team ] <- file.spawnedunpilotedtitans[ team ] - 1
+
+            return
         }
-    )
-    WaitForever()
+        else if ( team != titan.GetTeam() )
+        {
+            if ( withpilot && team in file.spawnedpilotedtitans )
+                file.spawnedpilotedtitans[ team ] <- file.spawnedpilotedtitans[ team ] - 1
+            else if ( !withpilot && team in file.spawnedunpilotedtitans )
+                file.spawnedunpilotedtitans[ team ] <- file.spawnedunpilotedtitans[ team ] - 1
+
+            team = titan.GetTeam()
+            if ( withpilot && team in file.spawnedpilotedtitans )
+                file.spawnedpilotedtitans[ team ] <- file.spawnedpilotedtitans[ team ] + 1
+            else if ( withpilot )
+                file.spawnedpilotedtitans[ team ] <- 1
+            else if ( !withpilot && team in file.spawnedunpilotedtitans )
+                file.spawnedunpilotedtitans[ team ] <- file.spawnedunpilotedtitans[ team ] + 1
+            else if ( !withpilot )
+                file.spawnedunpilotedtitans[ team ] <- 1
+        }
+        WaitFrame()
+    }
 }
 
 entity function GetSpawnpoint( int team )
