@@ -1,6 +1,6 @@
 # Attrition Extended Recode
 
-[Discord Server](https://ds.nekouwugamerfnf.dev)
+[Discord Server](https://ds.asillyneko.dev)
 
 Use This To Make Sure The Server Doesn't Crash As Much :)
 
