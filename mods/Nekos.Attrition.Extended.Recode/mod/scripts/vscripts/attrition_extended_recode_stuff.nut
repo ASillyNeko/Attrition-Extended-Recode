@@ -1861,9 +1861,6 @@ entity function AttritionExtendedRecode_NpcPilotCallsInTitan( entity pilot, vect
 {
     Assert( !pilot.IsTitan() )
     Assert( IsAlive( pilot ) )
-    Assert( !NpcPilotGetPetTitan( pilot ) )
-
-    NpcResetNextTitanRespawnAvailable( pilot )
 
     array<string> settingsArray = GetAllowedTitanAISettings()
     bool usedomeshieldwarpfall = false
