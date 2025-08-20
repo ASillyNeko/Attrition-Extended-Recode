@@ -1,9 +1,11 @@
 untyped
 
 global function AttritionExtendedRecode_Init
-#if SERVER
+#if SERVER && MP
 global function AttritionExtendedRecode_SpawnPilotWithTitan
 global function AttritionExtendedRecode_SpawnTitan
+#endif
+#if SERVER
 global function AttritionExtendedRecode_SpawnedPilotedTitans
 global function AttritionExtendedRecode_SpawnedUnPilotedTitans
 global function AttritionExtendedRecode_TitanHasNpcPilot
@@ -124,10 +126,12 @@ struct
 #endif
 void function AttritionExtendedRecode_Init()
 {
+    #if MP
     AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "piloted_titan_count", "3" )
     AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "unpiloted_titan_count", "0" )
     AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "titan_spawn_score", "0" )
-    #if SERVER
+    #endif
+    #if SERVER && MP
 	AddDamageByCallback( "npc_titan", PilotTitanExecution )
     AddDamageByCallback( "npc_pilot_elite", PilotExecution )
 	AddDamageCallback( "npc_titan", NPCNOPAIN )
@@ -247,6 +251,17 @@ void function AttritionExtendedRecode_RemoveTitanDeathEject( entity titan )
     file.deatheject[ titan ] <- false
 }
 
+bool function AttritionExtendedRecode_TitanHasNpcPilot( entity titan )
+{
+	Assert( titan.IsTitan() )
+
+	if ( !(titan in file.pilotedtitan && file.pilotedtitan[ titan ]) )
+		return false
+
+	return true
+}
+#endif
+#if SERVER && MP
 void function PilotTitanExecution( entity ent, var damageInfo )
 {
     thread PilotTitanExecution_thread( ent, damageInfo )
@@ -571,16 +586,6 @@ bool function CanSurviveDamage( entity titan, var damageInfo )
     int damage = int( DamageInfo_GetDamage( damageInfo ) )
     int validHealth = GetTitanValidHealthFromDamageInfo( titan, damageInfo )
     return damage < validHealth
-}
-
-bool function AttritionExtendedRecode_TitanHasNpcPilot( entity titan )
-{
-	Assert( titan.IsTitan() )
-
-	if ( !(titan in file.pilotedtitan && file.pilotedtitan[ titan ]) )
-		return false
-
-	return true
 }
 
 entity function AttritionExtendedRecode_NpcTitanBecomesPilot( entity titan )

@@ -714,6 +714,13 @@ asset function GetNpcTitanPilotModel( entity titan )
 		modelName = AttritionExtendedRecode_GetTitanModel( titan )
 	}
 
+	#if HAS_BOSS_AI
+	if ( IsBossTitan( titan ) )
+	{
+		modelName = GetBossTitanCharacterModel( titan )
+	}
+	#endif
+
 	return modelName
 }
 
