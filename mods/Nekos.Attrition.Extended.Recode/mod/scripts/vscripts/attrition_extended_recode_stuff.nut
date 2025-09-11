@@ -127,8 +127,13 @@ struct
 void function AttritionExtendedRecode_Init()
 {
     #if MP
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "squad_count", "4" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "reaper_count", "2" )
     AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "piloted_titan_count", "3" )
     AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "unpiloted_titan_count", "0" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "spectre_spawn_score", "125" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "stalker_spawn_score", "380" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "reaper_spawn_score", "500" )
     AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "titan_spawn_score", "0" )
     #endif
     #if SERVER && MP
@@ -1446,12 +1451,12 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
         thread AttritionExtendedRecode_SpawnPilotWithTitan( team )
         return
     }
-    entity droppod = GetSpawnpoint( team )
-    if ( !IsValid( droppod ) )
+    entity spawnpoint = GetSpawnpoint( team )
+    if ( !IsValid( spawnpoint ) )
         return
-    droppod.s.lastUsedTime <- Time()
-    vector pos = droppod.GetOrigin()
-    vector angles = droppod.GetAngles()
+    spawnpoint.s.lastUsedTime <- Time()
+    vector pos = spawnpoint.GetOrigin()
+    vector angles = spawnpoint.GetAngles()
     entity pod = CreateDropPod( pos, angles )
     entity poddoor = DropPodDoor( pod )
     int titans = 7 + file.CustomTitans.len() + 1
@@ -1509,12 +1514,12 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
         thread AttritionExtendedRecode_SpawnTitan( team, withpilot )
         return
     }
-    entity droppod = GetSpawnpoint( team )
-    if ( !IsValid( droppod ) )
+    entity spawnpoint = GetSpawnpoint( team )
+    if ( !IsValid( spawnpoint ) )
         return
-    droppod.s.lastUsedTime <- Time()
-    vector origin = droppod.GetOrigin()
-    vector angles = droppod.GetAngles()
+    spawnpoint.s.lastUsedTime <- Time()
+    vector origin = spawnpoint.GetOrigin()
+    vector angles = spawnpoint.GetAngles()
     entity pilot = CreateEntity( "npc_pilot_elite" )
     pilot.SetOrigin( origin )
     DispatchSpawn( pilot )

@@ -1,35 +1,8 @@
 untyped
 global function GamemodeAITdm_Init
 
-// these are now default settings
-const int SQUADS_PER_TEAM = 4
-
-const int REAPERS_PER_TEAM = 2
-
-const int LEVEL_SPECTRES = 125
-const int LEVEL_STALKERS = 380
-const int LEVEL_REAPERS = 500
-
-// add settings
-global function AITdm_SetSquadsPerTeam
-global function AITdm_SetReapersPerTeam
-global function AITdm_SetLevelSpectres
-global function AITdm_SetLevelStalkers
-global function AITdm_SetLevelReapers
-
 struct
 {
-	// Due to team based escalation everything is an array
-	array< int > levels = [] // Initilazed in `Spawner_Threaded`
-	array< array< string > > podEntities = [ [ "npc_soldier" ], [ "npc_soldier" ] ]
-	array< bool > reapers = [ false, false ]
-
-	// default settings
-	int squadsPerTeam = SQUADS_PER_TEAM 
-	int reapersPerTeam = REAPERS_PER_TEAM
-	int levelSpectres = LEVEL_SPECTRES
-	int levelStalkers = LEVEL_STALKERS
-	int levelReapers = LEVEL_REAPERS
 	table< string, array<string> > weapons
 } file
 
@@ -67,33 +40,6 @@ void function GamemodeAITdm_Init()
 	ScoreEvent_SetupEarnMeterValuesForMixedModes()
 	SetupGenericTDMChallenge()
 }
-
-// add settings
-void function AITdm_SetSquadsPerTeam( int squads )
-{
-	file.squadsPerTeam = squads
-}
-
-void function AITdm_SetReapersPerTeam( int reapers )
-{
-	file.reapersPerTeam = reapers
-}
-
-void function AITdm_SetLevelSpectres( int level )
-{
-	file.levelSpectres = level
-}
-
-void function AITdm_SetLevelStalkers( int level )
-{
-	file.levelStalkers = level
-}
-
-void function AITdm_SetLevelReapers( int level )
-{
-	file.levelReapers = level
-}
-//
 
 // Starts skyshow, this also requiers AINs but doesn't crash if they're missing
 void function OnPrematchStart()
@@ -198,49 +144,65 @@ void function Spawner_Threaded( int team )
 	// used to index into escalation arrays
 	int index = team == TEAM_MILITIA ? 0 : 1
 	
-	file.levels = [ file.levelSpectres, file.levelSpectres ] // due we added settings, should init levels here!
-	
 	while( true )
 	{
-		Escalate( team )
-		
+		int score = GameRules_GetTeamScore( team )
 		// TODO: this should possibly not count scripted npc spawns, probably only the ones spawned by this script
 		array<entity> npcs = GetNPCArrayOfTeam( team )
 		int count = npcs.len()
 		int reaperCount = GetNPCArrayEx( "npc_super_spectre", team, -1, <0,0,0>, -1 ).len()
 
 		// REAPERS
-		if ( file.reapers[ index ] )
+		if ( score >= GetCurrentPlaylistVarInt( "reaper_spawn_score", 500 ) )
 		{
-			array< entity > points = SpawnPoints_GetDropPod()
-			if ( reaperCount < file.reapersPerTeam )
+			array< entity > points = SpawnPoints_GetTitan()
+			if ( reaperCount < GetCurrentPlaylistVarInt( "reaper_count", 2 ) )
 			{
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
-				waitthread AiGameModes_SpawnReaperModded( node.GetOrigin(), node.GetAngles(), team, "npc_super_spectre_aitdm", ReaperHandler )
+				node.s.lastUsedTime <- Time()
+				thread AiGameModes_SpawnReaperModded( node.GetOrigin(), node.GetAngles(), team, "npc_super_spectre_aitdm", ReaperHandler )
+				wait 1.0
 			}
 		}
 		
 		// NORMAL SPAWNS
-		if ( count < file.squadsPerTeam * 4 - 2 )
+		if ( count < GetCurrentPlaylistVarInt( "squad_count", 4 ) * 4 - 2 )
 		{
-			string ent = file.podEntities[ index ][ RandomInt( file.podEntities[ index ].len() ) ]
+			int squadspawns = 0
+			if ( score >= GetCurrentPlaylistVarInt( "spectre_spawn_score", 125 ) )
+				squadspawns += 1
+
+			if ( score >= GetCurrentPlaylistVarInt( "stalker_spawn_score", 380 ) )
+				squadspawns += 1
+
+			string ent = RandomIntRange( 0, squadspawns + 1 ).tostring()
+
+			if ( ent == "0" )
+				ent = "npc_soldier"
+
+			else if ( ent == "1" )
+				ent = "npc_spectre"
+
+			else if ( ent == "2" )
+				ent = "npc_stalker"
 			
 			array< entity > points = GetZiplineDropshipSpawns()
 			// Prefer dropship when spawning grunts
-			/*
-			if ( ent == "npc_soldier" && points.len() != 0 )
+			if ( ent == "npc_soldier" && points.len() != 0 && CoinFlip() && CoinFlip() )
 			{
 				if ( RandomInt( points.len() ) )
 				{
 					entity node = points[ GetSpawnPointIndex( points, team ) ]
-					waitthread Aitdm_SpawnDropShip( node, team )
+					node.s.lastUsedTime <- Time()
+					thread Aitdm_SpawnDropShip( node, team )
+					wait 2.0
 					continue
 				}
 			}
-			*/
 			
 			points = SpawnPoints_GetDropPod()
 			entity node = points[ GetSpawnPointIndex( points, team ) ]
+			node.s.lastUsedTime <- Time()
 			waitthread AiGameModes_SpawnDropPodModded( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
 		}
 		
@@ -274,42 +236,6 @@ void function Aitdm_SpawnDropShip( entity node, int team )
 	wait 20
 }
 
-// Based on points tries to balance match
-void function Escalate( int team )
-{
-	int score = GameRules_GetTeamScore( team )
-	int index = team == TEAM_MILITIA ? 1 : 0
-	// This does the "Enemy x incoming" text
-	string defcon = team == TEAM_MILITIA ? "IMCdefcon" : "MILdefcon"
-	
-	// Return if the team is under score threshold to escalate
-	if ( score < file.levels[ index ] || file.reapers[ index ] )
-		return
-	
-	// Based on score escalate a team
-	switch ( file.levels[ index ] )
-	{
-		case file.levelSpectres:
-			file.levels[ index ] = file.levelStalkers
-			file.podEntities[ index ].append( "npc_spectre" )
-			SetGlobalNetInt( defcon, 2 )
-			return
-		
-		case file.levelStalkers:
-			file.levels[ index ] = file.levelReapers
-			file.podEntities[ index ].append( "npc_stalker" )
-			SetGlobalNetInt( defcon, 3 )
-			return
-		
-		case file.levelReapers:
-			file.reapers[ index ] = true
-			SetGlobalNetInt( defcon, 4 )
-			return
-	}
-	
-	unreachable // hopefully
-}
-
 
 // Decides where to spawn ai
 // Each team has their "zone" where they and their ai spawns
@@ -325,12 +251,45 @@ int function GetSpawnPointIndex( array< entity > points, int team )
 		{
 			int index = RandomInt( points.len() )
 		
-			if ( Distance2D( points[ index ].GetOrigin(), zone.GetOrigin() ) < 6000 )
+			if ( Distance2D( points[ index ].GetOrigin(), zone.GetOrigin() ) < 6000 && IsSpawnpointValid( points[ index ], team ) )
 				return index
 		}
 	}
 	
 	return RandomInt( points.len() )
+}
+
+bool function IsSpawnpointValid( entity spawnpoint, int team )
+{
+    if ( !spawnpoint.HasKey( "ignoreGamemode" ) || spawnpoint.HasKey( "ignoreGamemode" ) && spawnpoint.kv.ignoreGamemode == "0" )
+    {
+        if ( GetSpawnpointGamemodeOverride() != "" )
+        {
+            string gamemodeKey = "gamemode_" + GetSpawnpointGamemodeOverride()
+            if ( spawnpoint.HasKey( gamemodeKey ) && ( spawnpoint.kv[ gamemodeKey ] == "0" || spawnpoint.kv[ gamemodeKey ] == "" ) )
+                return false
+        }
+        else if ( GameModeRemove( spawnpoint ) )
+            return false
+    }
+
+    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) )
+        return false
+
+    if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
+        return false
+
+    array< entity > enemyTitans = GetTitanArrayOfEnemies( team )
+    if ( GetConVarBool( "spawnpoint_avoid_npc_titan_sight" ) )
+    {
+        foreach ( titan in enemyTitans )
+        {
+            if ( IsAlive( titan ) && titan.IsNPC() && titan.CanSee( spawnpoint ) )
+                return false
+        }
+    }
+
+    return !spawnpoint.IsVisibleToEnemies( team )
 }
 
 // tells infantry where to go
