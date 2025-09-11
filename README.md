@@ -9,9 +9,19 @@ Use This To Make Sure The Server Doesn't Crash As Much :)
 
 Playlistvars 
 
+`squad_count` Default 4
+
+`reaper_count` Default 2
+
 `piloted_titan_count` Default 3
 
 `unpiloted_titan_count` Default 0
+
+`spectre_spawn_score` Default 125
+
+`stalker_spawn_score` Defualt 380
+
+`reaper_spawn_score` Default 500
 
 `titan_spawn_score` Default 0
 
