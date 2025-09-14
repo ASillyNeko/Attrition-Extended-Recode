@@ -436,7 +436,7 @@ void function PilotDamageAdjustments( entity pilot, var damageInfo )
 		return
 
 	int dpsTaken = int( GetTotalDamageTakenInTime( pilot, 1.0 ) )
-	int maxDPSTaken = 300
+	int maxDPSTaken = 500
 	if ( dpsTaken >= maxDPSTaken )
 		DamageInfo_SetDamage( damageInfo, 0 )
 	else

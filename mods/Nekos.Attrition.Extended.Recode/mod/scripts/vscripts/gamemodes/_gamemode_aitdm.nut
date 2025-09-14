@@ -13,7 +13,12 @@ void function GamemodeAITdm_Init()
 	AddCallback_GameStateEnter( eGameState.Prematch, OnPrematchStart )
 	AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
 	
-	AddCallback_OnNPCKilled( HandleScoreEvent )
+	AddDeathCallback( "npc_soldier", HandleDeathCallbackScoreEvent )
+	AddDeathCallback( "npc_spectre", HandleDeathCallbackScoreEvent )
+	AddDeathCallback( "npc_stalker", HandleDeathCallbackScoreEvent )
+	AddDeathCallback( "npc_super_spectre", HandleDeathCallbackScoreEvent )
+	AddDeathCallback( "npc_pilot_elite", HandleDeathCallbackScoreEvent )
+	AddDeathCallback( "npc_titan", HandleDeathCallbackScoreEvent )
 	AddCallback_OnPlayerKilled( HandleScoreEvent )
 		
 	AddCallback_OnClientConnected( OnPlayerConnected )
@@ -63,6 +68,11 @@ void function OnPlayerConnected( entity player )
 	Remote_CallFunction_NonReplay( player, "ServerCallback_AITDM_OnPlayerConnected" )
 }
 
+void function HandleDeathCallbackScoreEvent( entity victim, var damageInfo )
+{
+	thread HandleScoreEvent( victim, DamageInfo_GetAttacker( damageInfo ), damageInfo )
+}
+
 // Used to handle both player and ai events
 void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 {
@@ -83,7 +93,7 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	string eventName
 	
 	// Handle AI, marvins aren't setup so we check for them to prevent crash
-	if ( victim.IsNPC() && victim.GetClassName() != "npc_marvin" )
+	if ( victim.IsNPC() )
 	{
 		switch ( victim.GetClassName() )
 		{
@@ -95,6 +105,9 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 			case "npc_super_spectre":
 				playerScore = 3
 				break
+			case "npc_pilot_elite":
+				playerScore = 5
+				break
 			default:
 				playerScore = 0
 				break
@@ -105,7 +118,7 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 			playerScore = ScoreEvent_GetPointValue( GetScoreEvent( eventName ) )
 	}
 	
-	if ( victim.IsPlayer() || victim.GetClassName() == "npc_pilot_elite" )
+	if ( victim.IsPlayer() )
 		playerScore = 5
 	
 	// Player ejecting triggers this without the extra check
