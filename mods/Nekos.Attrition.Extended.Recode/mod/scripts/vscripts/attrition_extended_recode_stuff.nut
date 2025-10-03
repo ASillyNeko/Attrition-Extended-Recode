@@ -3104,7 +3104,7 @@ function TitanEjectPlayerForNPCs( entity ejectTitan, bool instant = false )
     }
 
     entity rodeoPlayer = GetRodeoPilot( ejectTitan )
-    if ( IsValid( rodeoPlayer ) )
+    if ( IsValid( rodeoPlayer ) && rodeoPlayer.IsPlayer() )
         Remote_CallFunction_Replay( rodeoPlayer, "ServerCallback_RodeoerEjectWarning", ejectTitan.GetTitanSoul().GetEncodedEHandle(), TITAN_PLAYEREJECT_DELAY + ejectDuration )
 
     if ( IsValid( e.player ) )
