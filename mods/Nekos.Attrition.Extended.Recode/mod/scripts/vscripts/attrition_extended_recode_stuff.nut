@@ -3267,7 +3267,7 @@ function TitanEjectPlayerForNPCs( entity ejectTitan, bool instant = false )
         if ( rider.IsPlayer() )
             ThrowRiderOff( rider, titan, riderVelocity )
         else
-            rider.Die()
+            rider.Die( titan, titan, { force = Vector( 0.4, 0.2, 0.3 ), scriptType = DF_GIB, damageSourceId = eDamageSourceId.titan_explosion } )
 
         wait 0.05
     }
