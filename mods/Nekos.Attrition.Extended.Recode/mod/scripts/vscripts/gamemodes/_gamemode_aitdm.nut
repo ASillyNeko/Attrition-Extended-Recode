@@ -211,10 +211,11 @@ void function Spawner_Threaded( int team )
 				}
 			}
 			
-			points = SpawnPoints_GetDropPod()
+			points = SpawnPoints_GetTitan()
 			entity node = points[ GetSpawnPointIndex( points, team ) ]
 			node.s.lastUsedTime <- Time()
-			waitthread AiGameModes_SpawnDropPodModded( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
+			thread AiGameModes_SpawnDropPodModded( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
+			wait 2.0
 		}
 		
 		WaitFrame()
