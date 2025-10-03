@@ -90,7 +90,6 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	// without showing the wrong value on client
 	int teamScore
 	int playerScore
-	string eventName
 	
 	// Handle AI, marvins aren't setup so we check for them to prevent crash
 	if ( victim.IsNPC() )
@@ -112,10 +111,6 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 				playerScore = 0
 				break
 		}
-		
-		// Titan kills get handled bellow this
-		if ( eventName != "KillNPCTitan"  && eventName != "" )
-			playerScore = ScoreEvent_GetPointValue( GetScoreEvent( eventName ) )
 	}
 	
 	if ( victim.IsPlayer() )
@@ -124,6 +119,9 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	// Player ejecting triggers this without the extra check
 	if ( victim.IsTitan() && victim.GetBossPlayer() != attacker )
 		playerScore += 10
+
+	if ( AttritionExtendedRecode_TitanHasNpcPilot( victim ) )
+		playerScore += 5
 	
 	
 	teamScore = playerScore
