@@ -77,7 +77,7 @@ struct
     
     table<entity, array<string> > weapons
     table<entity, asset> model
-    table<entity, string> pilottitle
+    table<entity, string> grenade
     table<entity, bool> pilotedtitan
 
     table<entity, int> smokecount
@@ -122,6 +122,13 @@ struct
         $"models/humans/pilots/pilot_medium_reaper_m.mdl",
         $"models/humans/pilots/pilot_medium_reaper_f.mdl"
     ]
+    array<string> pilotgrenades = [ 
+        "mp_weapon_frag_grenade",
+        "mp_weapon_grenade_electric_smoke", 
+        "mp_weapon_thermite_grenade",
+        "mp_weapon_grenade_emp",
+        "mp_weapon_grenade_gravity"
+    ]
 } file
 #endif
 void function AttritionExtendedRecode_Init()
@@ -135,6 +142,7 @@ void function AttritionExtendedRecode_Init()
     AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "stalker_spawn_score", "380" )
     AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "reaper_spawn_score", "500" )
     AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "titan_spawn_score", "0" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "ct_titan_replace_chance", "0.20" )
     #endif
     #if SERVER && MP
 	AddDamageByCallback( "npc_titan", PilotTitanExecution )
@@ -154,14 +162,14 @@ void function AttritionExtendedRecode_Init()
     {
         AddCallback_OnNPCKilled( HandleNPCScoreEvent )
     }
-    AttritionExtendedRecode_CustomTitanCommand( "ASillyNeko", "titan_atlas_vanguard", "npc_titan_auto_atlas_vanguard", "", "npc_titan_atlas_vanguard", "behavior_titan_long_range", "execution_vanguard_kit", 138, 2, true, false, "melee_titan_punch", [], "mp_titanweapon_xo16_vanguard", [], "mp_titanweapon_salvo_rockets", [], "mp_titanability_rearm", [], "mp_titanweapon_stun_laser", [], "mp_titancore_upgrade", [], [ePassives.PAS_VANGUARD_COREMETER], -1 )
+    //AttritionExtendedRecode_CustomTitanCommand( "ASillyNeko", "titan_atlas_vanguard", "npc_titan_auto_atlas_vanguard", "", "npc_titan_atlas_vanguard", "behavior_titan_long_range", "execution_vanguard_kit", 138, 2, true, false, "melee_titan_punch", [], "mp_titanweapon_xo16_vanguard", [], "mp_titanweapon_salvo_rockets", [], "mp_titanability_rearm", [], "mp_titanweapon_stun_laser", [], "mp_titancore_upgrade", [], [ePassives.PAS_VANGUARD_COREMETER], -1 )
     #endif
 }
 #if SERVER
 int function AttritionExtendedRecode_SpawnedPilotedTitans( int team )
 {
     if ( team in file.spawnedpilotedtitans )
-        return file.spawnedpilotedtitans[team]
+        return file.spawnedpilotedtitans[ team ]
 
     return 0
 }
@@ -169,7 +177,7 @@ int function AttritionExtendedRecode_SpawnedPilotedTitans( int team )
 int function AttritionExtendedRecode_SpawnedUnPilotedTitans( int team )
 {
     if ( team in file.spawnedunpilotedtitans )
-        return file.spawnedunpilotedtitans[team]
+        return file.spawnedunpilotedtitans[ team ]
 
     return 0
 }
@@ -429,22 +437,10 @@ void function PilotDamageAdjustments( entity pilot, var damageInfo )
 	if ( IsInstantDeath( damageInfo ) || DamageInfo_GetForceKill( damageInfo ) )
 		return
 
-	int damageSourceID = DamageInfo_GetDamageSourceIdentifier( damageInfo )
-	int damageType = DamageInfo_GetCustomDamageType( damageInfo )
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
-	if ( !IsValid( attacker ) )
-		return
 
-	int dpsTaken = int( GetTotalDamageTakenInTime( pilot, 1.0 ) )
-	int maxDPSTaken = 500
-	if ( dpsTaken >= maxDPSTaken )
+	if ( pilot == attacker )
 		DamageInfo_SetDamage( damageInfo, 0 )
-	else
-	{
-		int maxDamage = maxDPSTaken - dpsTaken
-		int currentDamage = int( DamageInfo_GetDamage( damageInfo ) )
-		DamageInfo_SetDamage( damageInfo, min( currentDamage, maxDamage ) )
-	}
 }
 
 void function PilotTitanAutoOrDeathEjectHandle( entity titan, var damageInfo )
@@ -605,10 +601,13 @@ entity function AttritionExtendedRecode_NpcTitanBecomesPilot( entity titan )
 
     array<string> weapon = []
     if ( titan in file.weapons )
-        weapon = file.weapons[titan]
+        weapon = file.weapons[ titan ]
     asset model = $""
     if ( titan in file.model )
-        model = file.model[titan]
+        model = file.model[ titan ]
+    string grenade = ""
+    if ( titan in file.grenade )
+        grenade = file.grenade[ titan ]
     int team = titan.GetTeam()
     vector origin = titan.GetOrigin()
     float angles = titan.GetAngles().z
@@ -643,6 +642,10 @@ entity function AttritionExtendedRecode_NpcTitanBecomesPilot( entity titan )
     }
     if ( !gaveweapon )
         RandomPilotWeapon( pilot )
+    if ( grenade != "" )
+        pilot.kv.grenadeWeaponName = grenade
+    else
+        pilot.kv.grenadeWeaponName = file.pilotgrenades.getrandom()
 
     titan.SetOwner( pilot )
     NPCFollowsNPCModded( titan, pilot )
@@ -714,7 +717,7 @@ void function PilotSpeedFlagsHPAndBehavior( entity npc )
     disableflags.extend( [ NPC_PAIN_IN_SCRIPTED_ANIM, NPC_ALLOW_FLEE ] )
     thread OnFlagChanged( npc, disableflags, true )
 
-    npc.SetMaxHealth( 1000 )
+    npc.SetMaxHealth( 500 )
     npc.SetHealth( npc.GetMaxHealth() )
     npc.SetBehaviorSelector( "behavior_sp_soldier" )
     npc.SetEnemyChangeCallback( OnNPCPilotEnemyChange )
@@ -1459,10 +1462,8 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
     vector angles = spawnpoint.GetAngles()
     entity pod = CreateDropPod( pos, angles )
     entity poddoor = DropPodDoor( pod )
-    int titans = 7 + file.CustomTitans.len() + 1
-    titans = RandomIntRange( 0, titans )
     AttritionExtendedRecode_CustomTitanStruct CustomTitan = AttritionExtendedRecode_CustomTitanEmpty()
-    if ( titans > 7 )
+    if ( RandomInt( 100 ) < int( GetCurrentPlaylistVarFloat( "ct_titan_replace_chance", 0.20 ) * 100 ) && file.CustomTitans.len() > 0 )
         CustomTitan = clone file.CustomTitans.getrandom()
     array<entity> npcs
     for ( int i = 0; i < 1; i++ )
@@ -1473,8 +1474,9 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
         file.isattritionextendedrecodeentity[ entitynpc ] <- true
         SetTeam( entitynpc, team )
         thread RandomPilotWeapon( entitynpc )
-        entitynpc.kv.AccuracyMultiplier = 1
-        entitynpc.kv.WeaponProficiency = eWeaponProficiency.GOOD
+        entitynpc.kv.grenadeWeaponName = file.pilotgrenades.getrandom()
+        entitynpc.kv.AccuracyMultiplier = 2.5
+        entitynpc.kv.WeaponProficiency = eWeaponProficiency.VERYGOOD
         thread PilotSpeedFlagsHPAndBehavior( entitynpc )
         thread entitynpc.SetModel( file.pilotmodels.getrandom() )
 
@@ -1526,8 +1528,9 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
     file.isattritionextendedrecodeentity[ pilot ] <- true
     pilot.SetInvulnerable()
     thread RandomPilotWeapon( pilot )
-    pilot.kv.AccuracyMultiplier = 1
-    pilot.kv.WeaponProficiency = eWeaponProficiency.GOOD
+    pilot.kv.grenadeWeaponName = file.pilotgrenades.getrandom()
+    pilot.kv.AccuracyMultiplier = 2.5
+    pilot.kv.WeaponProficiency = eWeaponProficiency.VERYGOOD
     pilot.SetModel( file.pilotmodels.getrandom() )
     pilot.EnableNPCFlag( NPC_IGNORE_ALL )
     pilot.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
@@ -1542,11 +1545,9 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
         NPCPrespawnWarpfallSequenceModded( titanSettings, origin, angles )
     }
     string setFile = GetRandomTitanSetFile( titanSettings )
-    int titans = 7 + file.CustomTitans.len() + 1
-    titans = RandomIntRange( 0, titans )
     entity titan
     AttritionExtendedRecode_CustomTitanStruct CustomTitan = AttritionExtendedRecode_CustomTitanEmpty()
-    if ( file.CustomTitans.len() > 0 )
+    if ( RandomInt( 100 ) < int( GetCurrentPlaylistVarFloat( "ct_titan_replace_chance", 0.20 ) * 100 ) && file.CustomTitans.len() > 0 )
         CustomTitan = clone file.CustomTitans.getrandom()
     if ( !CustomTitan.AllowedWithoutPilot )
     {
@@ -2015,6 +2016,7 @@ void function AttritionExtendedRecode_NpcPilotBecomesTitan( entity pilot, entity
     file.pilotedtitan[ titan ] <- true
     file.weapons[ titan ] <- weaponNames
     file.model[ titan ] <- pilot.GetModelName()
+    file.grenade[ titan ] <- expect string( pilot.kv.grenadeWeaponName )
 
     if ( titan in file.CustomTitanUID && file.CustomTitanUID[ titan ] >= 0 )
         titan.SetTitle( pilot.GetTitle() )
@@ -3104,7 +3106,7 @@ function TitanEjectPlayerForNPCs( entity ejectTitan, bool instant = false )
     }
 
     entity rodeoPlayer = GetRodeoPilot( ejectTitan )
-    if ( IsValid( rodeoPlayer ) )
+    if ( IsValid( rodeoPlayer ) && rodeoPlayer.IsPlayer() )
         Remote_CallFunction_Replay( rodeoPlayer, "ServerCallback_RodeoerEjectWarning", ejectTitan.GetTitanSoul().GetEncodedEHandle(), TITAN_PLAYEREJECT_DELAY + ejectDuration )
 
     if ( IsValid( e.player ) )
