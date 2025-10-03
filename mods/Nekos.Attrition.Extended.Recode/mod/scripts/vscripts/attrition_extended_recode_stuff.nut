@@ -3258,8 +3258,17 @@ function TitanEjectPlayerForNPCs( entity ejectTitan, bool instant = false )
 
         vector riderEjectAngles = AnglesCompose( ejectAngles, < 5, 0, 0 > )
 
-        float gravityScale = expect float ( rider.GetPlayerSettingsField( "gravityscale" ) )
+        float gravityScale = 1.0
+		
+		if ( rider.IsPlayer() )
+			gravityScale = expect float ( rider.GetPlayerSettingsField( "gravityscale" ) )
+
         vector riderVelocity = AnglesToForward( riderEjectAngles ) * (speed * gravityScale) * 0.95
+
+		if ( rider.IsPlayer() )
+			ThrowRiderOff( rider, titan, riderVelocity )
+		else
+			rider.Die( titan, titan, { force = Vector( 0.4, 0.2, 0.3 ), scriptType = DF_GIB, damageSourceId = eDamageSourceId.titan_explosion } )
 
         ThrowRiderOff( rider, titan, riderVelocity )
 
