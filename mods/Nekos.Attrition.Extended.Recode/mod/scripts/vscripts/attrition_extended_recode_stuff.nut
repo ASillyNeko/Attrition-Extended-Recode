@@ -2293,6 +2293,8 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
 
 entity function AttritionExtendedRecode_NpcPilotCallsInAndEmbarksTitan( entity pilot, vector origin, vector angles, AttritionExtendedRecode_CustomTitanStruct CustomTitan )
 {
+    pilot.EndSignal( "OnDestroy" )
+    pilot.EndSignal( "OnDeath" )
 	wait 2.5
 	entity titan = AttritionExtendedRecode_NpcPilotCallsInTitan( pilot, origin, angles, CustomTitan )
 	thread AttritionExtendedRecode_NpcPilotRunsToAndEmbarksFallingTitan( pilot, titan )
