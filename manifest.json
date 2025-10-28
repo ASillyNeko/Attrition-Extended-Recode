@@ -1,7 +1,8 @@
 {
-    "name": "Nekos_Attrition_Extended_Recode",
+    "name": "Attrition_Extended_Recode",
     "version_number": "1.1.6",
     "website_url": "https://github.com/ASillyNeko/Attrition-Extended-Recode",
     "description": "Attrition Extended without crashes.",
     "dependencies": []
 }
+
