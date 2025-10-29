@@ -1031,7 +1031,7 @@ void function MonarchUpgrade( entity weapon )
         if ( SoulHasPassive( soul, ePassives.PAS_VANGUARD_CORE1 ) )  // Arc Rounds
         {
             array<entity> weapons = GetPrimaryWeapons( owner )
-            if ( weapons.len() > 0 )
+            if ( weapons.len() )
             {
                 entity primaryWeapon = weapons[0]
                 if ( IsValid( primaryWeapon ) )
@@ -1070,7 +1070,7 @@ void function MonarchUpgrade( entity weapon )
         else if ( SoulHasPassive( soul, ePassives.PAS_VANGUARD_CORE9 ) ) //XO-16 Battle Rifle
         {
             array<entity> weapons = GetPrimaryWeapons( owner )
-            if ( weapons.len() > 0 )
+            if ( weapons.len() )
             {
                 entity primaryWeapon = weapons[0]
                 if ( IsValid( primaryWeapon ) )
@@ -1463,7 +1463,7 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
     entity pod = CreateDropPod( pos, angles )
     entity poddoor = DropPodDoor( pod )
     AttritionExtendedRecode_CustomTitanStruct CustomTitan = AttritionExtendedRecode_CustomTitanEmpty()
-    if ( RandomInt( 100 ) < int( GetCurrentPlaylistVarFloat( "ct_titan_replace_chance", 0.20 ) * 100 ) && file.CustomTitans.len() > 0 )
+    if ( RandomInt( 100 ) < int( GetCurrentPlaylistVarFloat( "ct_titan_replace_chance", 0.20 ) * 100 ) && file.CustomTitans.len() )
         CustomTitan = clone file.CustomTitans.getrandom()
     array<entity> npcs
     for ( int i = 0; i < 1; i++ )
@@ -1547,7 +1547,7 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
     string setFile = GetRandomTitanSetFile( titanSettings )
     entity titan
     AttritionExtendedRecode_CustomTitanStruct CustomTitan = AttritionExtendedRecode_CustomTitanEmpty()
-    if ( RandomInt( 100 ) < int( GetCurrentPlaylistVarFloat( "ct_titan_replace_chance", 0.20 ) * 100 ) && file.CustomTitans.len() > 0 )
+    if ( RandomInt( 100 ) < int( GetCurrentPlaylistVarFloat( "ct_titan_replace_chance", 0.20 ) * 100 ) && file.CustomTitans.len() )
         CustomTitan = clone file.CustomTitans.getrandom()
     if ( !CustomTitan.AllowedWithoutPilot )
     {
@@ -1646,12 +1646,12 @@ entity function GetSpawnpoint( int team )
 {
     array<entity> spawns = SpawnPoints_GetTitan()
     array<entity> betterspawns
-    if ( spawns.len() <= 0 )
+    if ( !spawns.len() )
         return null
     foreach ( entity spawnpoint in spawns )
         if ( IsSpawnpointValid( spawnpoint, team ) )
             betterspawns.append( spawnpoint )
-    if ( betterspawns.len() <= 0 )
+    if ( !betterspawns.len() )
         return null
     else
         return betterspawns.getrandom()
@@ -2070,7 +2070,7 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
         {
             if ( CustomTitans.Weapon != "" )
                 titan.GiveWeapon( CustomTitans.Weapon )
-            if ( CustomTitans.Weapon != "" && CustomTitans.WeaponMods.len() > 0 )
+            if ( CustomTitans.Weapon != "" && CustomTitans.WeaponMods.len() )
             {
                 entity weapon = titan.GetActiveWeapon()
                 if ( IsValid( weapon ) )
@@ -2083,7 +2083,7 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
 
             if ( CustomTitans.Ordnance != "" )
                 titan.GiveOffhandWeapon( CustomTitans.Ordnance, OFFHAND_ORDNANCE )
-            if ( CustomTitans.Ordnance != "" && CustomTitans.OrdnanceMods.len() > 0 )
+            if ( CustomTitans.Ordnance != "" && CustomTitans.OrdnanceMods.len() )
             {
                 entity weapon = titan.GetOffhandWeapon( OFFHAND_ORDNANCE )
                 if ( IsValid( weapon ) )
@@ -2096,7 +2096,7 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
 
             if ( CustomTitans.Utility != "" )
                 titan.GiveOffhandWeapon( CustomTitans.Utility, OFFHAND_EQUIPMENT )
-            if ( CustomTitans.Utility != "" && CustomTitans.UtilityMods.len() > 0 )
+            if ( CustomTitans.Utility != "" && CustomTitans.UtilityMods.len() )
             {
                 entity weapon = titan.GetOffhandWeapon( OFFHAND_EQUIPMENT )
                 if ( IsValid( weapon ) )
@@ -2109,7 +2109,7 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
 
             if ( CustomTitans.Tactical != "" )
                 titan.GiveOffhandWeapon( CustomTitans.Tactical, OFFHAND_ANTIRODEO )
-            if ( CustomTitans.Tactical != "" && CustomTitans.TacticalMods.len() > 0 )
+            if ( CustomTitans.Tactical != "" && CustomTitans.TacticalMods.len() )
             {
                 entity weapon = titan.GetOffhandWeapon( OFFHAND_ANTIRODEO )
                 if ( IsValid( weapon ) )
@@ -2126,7 +2126,7 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
                 if ( CustomTitans.Core == "mp_titancore_upgrade" )
                     thread MonarchUpgrades( titan )
             }
-            if ( CustomTitans.Core != "" && CustomTitans.CoreMods.len() > 0 )
+            if ( CustomTitans.Core != "" && CustomTitans.CoreMods.len() )
             {
                 entity weapon = titan.GetOffhandWeapon( OFFHAND_SPECIAL )
                 if ( IsValid( weapon ) )
@@ -2139,7 +2139,7 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
 
             if ( CustomTitans.Melee != "" )
                 titan.GiveOffhandWeapon( CustomTitans.Melee, OFFHAND_MELEE )
-            if ( CustomTitans.Melee != "" && CustomTitans.MeleeMods.len() > 0 )
+            if ( CustomTitans.Melee != "" && CustomTitans.MeleeMods.len() )
             {
                 entity weapon = titan.GetOffhandWeapon( OFFHAND_MELEE )
                 if ( IsValid( weapon ) )
@@ -2155,7 +2155,7 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
             {
                 if ( CustomTitans.TitanExecutionRef != "" )
                     soul.soul.titanLoadout.titanExecution = CustomTitans.TitanExecutionRef
-                if ( CustomTitans.Passives.len() > 0 )
+                if ( CustomTitans.Passives.len() )
                     foreach( int passive in CustomTitans.Passives )
                         GivePassive( soul, passive )
             }
