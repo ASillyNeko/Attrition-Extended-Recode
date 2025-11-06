@@ -171,6 +171,7 @@ void function Spawner_Threaded( int team )
 			{
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
 				node.s.lastUsedTime <- Time()
+				node.e.spawnTime = Time()
 				thread AiGameModes_SpawnReaperModded( node.GetOrigin(), node.GetAngles(), team, "npc_super_spectre_aitdm", ReaperHandler )
 				wait 1.0
 			}
@@ -205,6 +206,7 @@ void function Spawner_Threaded( int team )
 				{
 					entity node = points[ GetSpawnPointIndex( points, team ) ]
 					node.s.lastUsedTime <- Time()
+					node.e.spawnTime = Time()
 					thread Aitdm_SpawnDropShip( node, team )
 					wait 2.0
 					continue
@@ -214,6 +216,7 @@ void function Spawner_Threaded( int team )
 			points = SpawnPoints_GetTitan()
 			entity node = points[ GetSpawnPointIndex( points, team ) ]
 			node.s.lastUsedTime <- Time()
+			node.e.spawnTime = Time()
 			thread AiGameModes_SpawnDropPodModded( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
 			wait 2.0
 		}
@@ -257,16 +260,25 @@ int function GetSpawnPointIndex( array< entity > points, int team )
 	entity zone = DecideSpawnZone_Generic( points, team )
 	
 	if ( IsValid( zone ) )
-	{
-		// 20 Tries to get a random point close to the zone
-		for ( int i = 0; i < 20; i++ )
-		{
-			int index = RandomInt( points.len() )
-		
-			if ( Distance2D( points[ index ].GetOrigin(), zone.GetOrigin() ) < 6000 && IsSpawnpointValid( points[ index ], team ) )
-				return index
-		}
-	}
+		for ( int i = 0; i < points.len(); i++ )
+			if ( Distance2D( points[i].GetOrigin(), zone.GetOrigin() ) < 6000 && IsSpawnpointValid( points[i], team ) )
+				return i
+
+	array < entity > spawnpoints
+	foreach ( entity spawnpoint in points )
+		if ( IsSpawnpointValid( spawnpoint, team ) )
+			spawnpoints.append( spawnpoint )
+
+	entity point
+	if ( spawnpoints.len() )
+		if ( IsValid( zone ) )
+			point = GetClosest2D( spawnpoints, zone.GetOrigin() )
+		else
+			point = spawnpoints.getrandom()
+
+	for ( int i = 0; i < points.len(); i++ )
+		if ( points[i] == point )
+			return i
 	
 	return RandomInt( points.len() )
 }
@@ -285,7 +297,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
             return false
     }
 
-    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) )
+    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) || ( "spawnTime" in spawnpoint.e && Time() - spawnpoint.e.spawnTime <= 10.0 )  )
         return false
 
     if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )

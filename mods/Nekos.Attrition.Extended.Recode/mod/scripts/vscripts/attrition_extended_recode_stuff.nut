@@ -1458,6 +1458,7 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
     if ( !IsValid( spawnpoint ) )
         return
     spawnpoint.s.lastUsedTime <- Time()
+    spawnpoint.e.spawnTime = Time()
     vector pos = spawnpoint.GetOrigin()
     vector angles = spawnpoint.GetAngles()
     entity pod = CreateDropPod( pos, angles )
@@ -1520,6 +1521,7 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
     if ( !IsValid( spawnpoint ) )
         return
     spawnpoint.s.lastUsedTime <- Time()
+    spawnpoint.e.spawnTime = Time()
     vector origin = spawnpoint.GetOrigin()
     vector angles = spawnpoint.GetAngles()
     entity pilot = CreateEntity( "npc_pilot_elite" )
@@ -1671,7 +1673,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
             return false
     }
 
-    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) )
+    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) || ( "spawnTime" in spawnpoint.e && Time() - spawnpoint.e.spawnTime <= 10.0 )  )
         return false
 
     if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
