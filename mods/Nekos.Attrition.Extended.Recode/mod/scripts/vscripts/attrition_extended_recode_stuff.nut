@@ -489,6 +489,8 @@ void function EjectWhenDoomed_thread( entity titan )
             bool enemyIsEjecting = HasSoul( enemy ) && enemy.GetTitanSoul().IsEjecting()
             if ( !enemyIsEjecting && horizontallyClose && !enemy.ContextAction_IsMeleeExecution() && !CodeCallback_IsValidMeleeExecutionTarget( titan, enemy ) && CodeCallback_IsValidMeleeExecutionTarget( enemy, titan ) )
                 shouldEjectTitan = true
+            if ( enemyIsEjecting && NPC_GetNuclearPayload( enemy ) )
+                shouldEjectTitan = true
         }
 
         if ( titan in file.pilotedtitan && file.pilotedtitan[ titan ] && ( shouldEjectTitan || ( titan in file.autoeject && file.autoeject[ titan ] ) ) )
