@@ -134,15 +134,15 @@ struct
 void function AttritionExtendedRecode_Init()
 {
     #if MP
-    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "squad_count", "4" )
-    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "reaper_count", "2" )
-    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "piloted_titan_count", "3" )
-    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "unpiloted_titan_count", "0" )
-    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "spectre_spawn_score", "125" )
-    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "stalker_spawn_score", "380" )
-    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "reaper_spawn_score", "500" )
-    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "titan_spawn_score", "0" )
-    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "ct_titan_replace_chance", "0.20" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "squad_count", "4", "Squad Count" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "reaper_count", "2", "Reaper Count" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "piloted_titan_count", "3", "Piloted Titan Count" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "unpiloted_titan_count", "0", "Unpiloted Titan Count" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "spectre_spawn_score", "125", "Spectre Spawn Score" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "stalker_spawn_score", "380", "Stalker Spawn Score" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "reaper_spawn_score", "500", "Reaper Spawn Score" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "titan_spawn_score", "0", "Titan Spawn Score" )
+    AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "ct_titan_replace_chance", "0.20", "Custom Titan Replace Chance" )
     #endif
     #if SERVER && MP
 	AddDamageByCallback( "npc_titan", PilotTitanExecution )
@@ -521,7 +521,7 @@ void function EjectWhenDoomed_thread( entity titan )
         {
             bool horizontallyClose = Distance2D( titan.GetOrigin(), enemy.GetOrigin() ) < 630
             bool enemyIsEjecting = HasSoul( enemy ) && enemy.GetTitanSoul().IsEjecting()
-            if ( !enemyIsEjecting && horizontallyClose && !enemy.ContextAction_IsMeleeExecution() )
+            if ( !enemyIsEjecting && horizontallyClose && !enemy.ContextAction_IsMeleeExecution() && CodeCallback_IsValidMeleeExecutionTarget( titan, enemy ) && !CodeCallback_IsValidMeleeExecutionTarget( enemy, titan ) )
                 shouldEjectTitan = true
         }
 
@@ -2335,8 +2335,8 @@ void function ShouldTitanStandOrKneel( entity titan, entity pilot )
         thread TitanStandUp( titan )
     if ( !IsAlive( pilot ) )
         thread TitanStandUp( titan )
-    pilot.EndSignal( "OnDeath" )
     pilot.EndSignal( "OnDestroy" )
+    pilot.EndSignal( "OnDeath" )
     OnThreadEnd(
         function () : ( titan )
         {
@@ -2375,26 +2375,26 @@ function AttritionExtendedRecode_NpcPilotEmbarksTitan( entity pilot, entity tita
 
 	titan.EndSignal( "OnDestroy" )
 	titan.EndSignal( "OnDeath" )
+    pilot.EndSignal( "OnDestroy" )
+    pilot.EndSignal( "OnDeath" )
 
-	local titanSubClass = GetSoulTitanSubClass( titan.GetTitanSoul() )
-	local embarkSet = FindBestEmbark( pilot, titan )
+	string titanSubClass = GetSoulTitanSubClass( titan.GetTitanSoul() )
 
-	while ( embarkSet == null )
-	{
+	while ( FindBestEmbark( pilot, titan ) == null )
 		WaitFrame()
-		embarkSet = FindBestEmbark( pilot, titan )
-	}
+
+    table embarkSet = expect table ( FindBestEmbark( pilot, titan ) )
 
 	FirstPersonSequenceStruct sequence
 	sequence.attachment = "hijack"
 	sequence.useAnimatedRefAttachment = expect bool ( embarkSet.action.useAnimatedRefAttachment )
 	sequence.blendTime = 0.5
 	sequence.thirdPersonAnim = GetAnimFromAlias( titanSubClass, embarkSet.animSet.thirdPersonKneelingAlias )
-	local titanAnim = embarkSet.animSet.titanKneelingAnim
+	string titanAnim = expect string ( embarkSet.animSet.titanKneelingAnim )
 	if ( titan.GetTitanSoul().GetStance() > STANCE_STANDING )
 	{
 	    sequence.thirdPersonAnim = GetAnimFromAlias( titanSubClass, embarkSet.animSet.thirdPersonStandingAlias )
-	    titanAnim = embarkSet.animSet.titanStandingAnim
+	    titanAnim = expect string ( embarkSet.animSet.titanStandingAnim )
 	}
 
 	if ( IsCloaked( pilot ) )
@@ -2407,7 +2407,7 @@ function AttritionExtendedRecode_NpcPilotEmbarksTitan( entity pilot, entity tita
 	nopain.append( NPC_NO_PAIN )
 	thread OnFlagChanged( titan, nopain, false, true, false )
 	pilot.EnableNPCFlag( NPC_IGNORE_ALL )
-	file.titanisbeingembarked[titan] <- true
+	file.titanisbeingembarked[ titan ] <- true
 	waitthread PlayAnimGravity( titan, titanAnim )
 	SetStanceStand( titan.GetTitanSoul() )
 	AttritionExtendedRecode_NpcPilotBecomesTitan( pilot, titan )
@@ -2457,48 +2457,49 @@ const MAX_EJECT_LATENCY_COMPENSATION = 0.4
 
 bool function ShouldCalloutEjection( entity player, vector titanOrigin, entity titan )
 {
-    if ( DistanceSqr( titanOrigin, titan.GetOrigin() ) < 2000 * 2000 )
-        return true
+	if ( DistanceSqr( titanOrigin, titan.GetOrigin() ) < 2000 * 2000 )
+		return true
 
-    if ( WasRecentlyHitByEntity( player, titan, 6.0 ) )
-        return true
+	// have they hit each other recently? To catch LTS sniper war ejections
+	if ( WasRecentlyHitByEntity( player, titan, 6.0 ) )
+		return true
 
-    if ( WasRecentlyHitByEntity( titan, player, 6.0 ) )
-        return true
+	if ( WasRecentlyHitByEntity( titan, player, 6.0 ) )
+		return true
 
-    return false
+	return false
 }
 
-function TitanEjectVO( entity player, vector titanOrigin )
+void function TitanEjectVO( entity player, vector titanOrigin )
 {
-    array<entity> titans = GetTitanArray()
-    int team = player.GetTeam()
-    int voEnum
+	array<entity> titans = GetTitanArray()
+	int team = player.GetTeam()
+	int voEnum
 
-    foreach ( titan in titans )
-    {
-        if ( !titan.IsPlayer() )
-            continue
-        if ( titan == player )
-            continue
+	foreach ( titan in titans )
+	{
+		if ( !titan.IsPlayer() )
+			continue
+		if ( titan == player )
+			continue
 
-        if ( team == titan.GetTeam() )
-        {
-            if ( DistanceSqr( titanOrigin, titan.GetOrigin() ) > 2000 * 2000 )
-                return
+		if ( team == titan.GetTeam() )
+		{
+			if ( DistanceSqr( titanOrigin, titan.GetOrigin() ) > 2000 * 2000 )
+				return
 
-            voEnum = eTitanVO.FRIENDLY_EJECTED
-        }
-        else
-        {
-            if ( !ShouldCalloutEjection( player, titanOrigin, titan ) )
-                return
+			voEnum = eTitanVO.FRIENDLY_EJECTED
+		}
+		else
+		{
+			if ( !ShouldCalloutEjection( player, titanOrigin, titan ) )
+				return
 
-            voEnum = eTitanVO.ENEMY_EJECTED
-        }
+			voEnum = eTitanVO.ENEMY_EJECTED
+		}
 
-        Remote_CallFunction_Replay( titan, "SCB_TitanDialogue", voEnum )
-    }
+		Remote_CallFunction_Replay( titan, "SCB_TitanDialogue", voEnum )
+	}
 }
 
 TitanEjectDamage function GetSoulEjectDamageOverride( entity soul )
@@ -2507,7 +2508,7 @@ TitanEjectDamage function GetSoulEjectDamageOverride( entity soul )
         return defaultStruct
 }
 
-function ClearEjectInvulnerability( entity player )
+void function ClearEjectInvulnerability( entity player )
 {
     if ( !IsValid( player ) )
         return
@@ -2525,37 +2526,37 @@ function ClearEjectInvulnerability( entity player )
     wait 0.35
 }
 
-function LookAtEachOther( entity rider, entity player )
+void function LookAtEachOther( entity rider, entity player )
 {
-    rider.EndSignal( "OnDeath" )
-    player.EndSignal( "OnDeath" )
+	rider.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDeath" )
 
-    float endTime = Time() + 0.45
+	float endTime = Time() + 0.45
 
-    for ( ;; )
-    {
-        vector org1 = rider.GetOrigin()
-        vector org2 = player.GetOrigin()
-        vector vec1 = org2 - org1
-        vector angles1 = VectorToAngles( vec1 )
-        vector vec2 = org1 - org2
-        vector angles2 = VectorToAngles( vec2 )
+	for ( ;; )
+	{
+		vector org1 = rider.GetOrigin()
+		vector org2 = player.GetOrigin()
+		vector vec1 = org2 - org1
+		vector angles1 = VectorToAngles( vec1 )
+		vector vec2 = org1 - org2
+		vector angles2 = VectorToAngles( vec2 )
 
-        angles1.x = 0
-        angles2.x = 0
-        if ( rider.GetParent() == null )
-            rider.SetAngles( angles1 )
-        if ( player.GetParent() == null )
-            player.SetAngles( angles2 )
+		angles1.x = 0
+		angles2.x = 0
+		if ( rider.GetParent() == null )
+			rider.SetAngles( angles1 )
+		if ( player.GetParent() == null )
+			player.SetAngles( angles2 )
 
-        if ( Time() >= endTime )
-            return
+		if ( Time() >= endTime )
+			return
 
-        WaitFrame()
-    }
+		WaitFrame()
+	}
 }
 
-function EjectFlightTracker( entity player )
+void function EjectFlightTracker( entity player )
 {
     player.EndSignal( "OnDeath" )
     player.EndSignal( "EjectLand" )
@@ -2582,23 +2583,24 @@ function EjectFlightTracker( entity player )
     }
 }
 
-function TitanNonSolidTemp( entity titan )
+void function TitanNonSolidTemp( entity titan )
 {
-    if ( !EntityInSolid( titan ) )
-        return
+	if ( !EntityInSolid( titan ) )
+		return
 
-    local collisionGroup = titan.kv.CollisionGroup
-    
-    titan.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
-    
-    titan.EndSignal( "OnDeath" )
+	string collisionGroup = expect string ( titan.kv.CollisionGroup )
 
-    while( EntityInSolid( titan ) )
-    {
-        wait 0.1
-    }
+	// Blocks bullets, projectiles but not players and not AI
+	titan.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
 
-    titan.kv.collisionGroup = collisionGroup
+	titan.EndSignal( "OnDeath" )
+
+	while( EntityInSolid( titan ) )
+	{
+		wait 0.1
+	}
+
+	titan.kv.collisionGroup = collisionGroup
 }
 
 TitanNukeDamage function GetSoulNukeDamageOverride( entity soul )
@@ -2607,7 +2609,7 @@ TitanNukeDamage function GetSoulNukeDamageOverride( entity soul )
         return defaultStruct
 }
 
-function ClearNuclearBlueSunEffect( e )
+void function ClearNuclearBlueSunEffect( e )
 {
     foreach ( fx in e.nukeFX )
     {
@@ -2628,642 +2630,530 @@ void function DelayedCleanUpNukeFX( entity titan, array<entity> nukeFXToCleanUp 
     }
 }
 
-function NuclearCoreExplosionChainReaction( vector origin, e )
+void function NuclearCoreExplosionChainReaction( vector origin, e )
 {
-    int explosions
-    local innerRadius
-    float time
-    bool IsNPC
+	int explosions
+	int innerRadius
+	float time
+	bool IsNPC
 
-    local heavyArmorDamage = 2500
-    local normalDamage = 75
+	float heavyArmorDamage = 2500
+	float normalDamage = 75
 
-    switch ( e.nuclearPayload )
-    {
-        case 4:
-            explosions = 3
-            innerRadius = 350
-            time = 1.5 
-            IsNPC = true
+	switch ( e.nuclearPayload )
+	{
+		case 4:
+			// npc nuke: the idea is to be the same as the regular nuke - but with less explosion calls
+			explosions = 3
+			innerRadius = 350
+			time = 1.5 //1 is the regular nuke time - but we won't be adding an extra explosion and we want 3 explosions over 1s. This will mathematically give us that.
+			IsNPC = true
 
-            local fraction = 10.0 / explosions 
-            heavyArmorDamage = heavyArmorDamage * fraction
-            normalDamage = normalDamage * fraction
-            break
+			float fraction = 10.0 / explosions //10 is the regular nuke number
+			heavyArmorDamage = heavyArmorDamage * fraction
+			normalDamage = normalDamage * fraction
+			break
 
-        case 3:
-            explosions = 20
-            innerRadius = 350
-            time = 1.7
-            IsNPC = false
-            break
+		case 3:
+			// super nuke: PAS_NUCLEAR_CORE + PAS_BUILD_UP_NUCLEAR_CORE
+			explosions = 20
+			innerRadius = 350
+			time = 1.7
+			IsNPC = false
+			break
 
-        case 2:
-            explosions = 15
-            innerRadius = 350
-            time = 1.4
-            IsNPC = false
-            break
+		case 2:
+			// super nuke: PAS_NUCLEAR_CORE
+			explosions = 15
+			innerRadius = 350
+			time = 1.4
+			IsNPC = false
+			break
 
-        case 1:
-            explosions = 10
-            innerRadius = 350
-            time = 1.0
-            IsNPC = false
-            break
+		case 1:
+			// regular nuke: PAS_BUILD_UP_NUCLEAR_CORE
+			explosions = 10
+			innerRadius = 350
+			time = 1.0
+			IsNPC = false
+			break
 
-        default:
-            Assert( 0, "e.nuclearPayload value: " + e.nuclearPayload + " not accounted for." )
-            break
-    }
+		default:
+			Assert( 0, "e.nuclearPayload value: " + e.nuclearPayload + " not accounted for." )
+			break
+	}
 
-    float waitPerExplosion = time / explosions
+	float waitPerExplosion = time / explosions
 
-    ClearNuclearBlueSunEffect( e )
+	ClearNuclearBlueSunEffect( e )
 
-    array<entity> nukeFXToCleanUp
+	if ( IsValid( e.player ) )
+	{
+		thread __CreateFxInternal( TITAN_NUCLEAR_CORE_FX_1P, null, "", origin, Vector(0,RandomInt(360),0), C_PLAYFX_SINGLE, null, 1, expect entity( e.player ) )
+		thread __CreateFxInternal( TITAN_NUCLEAR_CORE_FX_3P, null, "", origin + Vector( 0, 0, -100 ), Vector(0,RandomInt(360),0), C_PLAYFX_SINGLE, null, 6, expect entity( e.player ) )
+	}
+	else
+	{
+		PlayFX( TITAN_NUCLEAR_CORE_FX_3P, origin + Vector( 0, 0, -100 ), Vector(0,RandomInt(360),0) )
+	}
 
-    if ( IsValid( e.player ) )
-    {
-        entity nukeFX1p = __CreateFxInternal( TITAN_NUCLEAR_CORE_FX_1P, null, "", origin, Vector(0,RandomInt(360),0), C_PLAYFX_SINGLE, null, 1, expect entity( e.player ) )
-        nukeFX1p.DisableHibernation()
-        nukeFXToCleanUp.append( nukeFX1p )
-        entity nukeFX3p = __CreateFxInternal( TITAN_NUCLEAR_CORE_FX_3P, null, "", origin + Vector( 0, 0, -100 ), Vector(0,RandomInt(360),0), C_PLAYFX_SINGLE, null, 6, expect entity( e.player ) )
-        nukeFX3p.DisableHibernation()
-        nukeFXToCleanUp.append( nukeFX3p )
-    }
-    else
-    {
-        entity nukeFX = PlayFX( TITAN_NUCLEAR_CORE_FX_3P, origin + Vector( 0, 0, -100 ), Vector(0,RandomInt(360),0) )
-        nukeFX.DisableHibernation()
-        nukeFXToCleanUp.append( nukeFX )
-    }
+	// one extra explosion that does damage to physics entities at smaller radius
+	if ( !IsNPC )
+		explosions += 1
 
-    bool hasNukeDamageOverride = false
-    entity titan = expect entity( e.titan )
-    entity soul
-    if ( IsValid( titan ) && titan.IsTitan() )
-        soul = titan.GetTitanSoul()
-    thread DelayedCleanUpNukeFX( titan, nukeFXToCleanUp )
-    TitanNukeDamage nukeDamageStruct
-    
-    
-    
+	int outerRadius
 
-    bool freezeDuringNuke = true
+	float baseNormalDamage 		= normalDamage
+	float baseHeavyArmorDamage 	= heavyArmorDamage
+	int baseInnerRadius 		= innerRadius
+	int baseOuterRadius 		= outerRadius
 
-    if ( freezeDuringNuke )
-    {
-        titan.EndSignal( "OnDestroy" )
+	// all damage must have an inflictor currently
+	entity inflictor = CreateEntity( "script_ref" )
+	inflictor.SetOrigin( origin )
+	inflictor.kv.spawnflags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
+	DispatchSpawn( inflictor )
 
-        titan.SetNoTarget( true )
-        titan.SetEfficientMode( true )
-        titan.SetTouchTriggers( false )
-        titan.SetAimAssistAllowed( false )
-        titan.SetInvulnerable()
-        titan.NotSolid()
-        titan.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY 
-        HideName( titan )
+	OnThreadEnd(
+		function() : ( inflictor )
+		{
+			if ( IsValid( inflictor ) )
+				inflictor.Destroy()
+		}
+	)
 
-    }
+	for ( int i = 0; i < explosions; i++ )
+	{
+		float normalDamage 		= baseNormalDamage
+		float heavyArmorDamage 	= baseHeavyArmorDamage
+		int innerRadius 		= baseInnerRadius
+		int outerRadius 		= baseOuterRadius
 
-    bool doPhysicsEntityDamage = false
-    if ( explosions >= 10 )
-    {
-        explosions += 1
-        doPhysicsEntityDamage = true
-    }
+		if ( i == 0 && !IsNPC )
+		{
+			normalDamage = 75
+			heavyArmorDamage = 0
+			outerRadius = 600
+		}
+		else
+		{
+			outerRadius = 750
+		}
 
-    local outerRadius
+		entity explosionOwner = GetExplosionOwner( e )
 
-    local baseNormalDamage 		= normalDamage
-    local baseHeavyArmorDamage 	= heavyArmorDamage
-    local baseInnerRadius 		= innerRadius
-    local baseOuterRadius 		= outerRadius
+		if ( outerRadius < innerRadius )
+			outerRadius = innerRadius
 
-    entity inflictor = CreateEntity( "script_ref" )
-    inflictor.SetOrigin( origin )
-    inflictor.kv.spawnflags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
-    DispatchSpawn( inflictor )
+		RadiusDamage_DamageDef( damagedef_nuclear_core,
+			origin,								// origin
+			explosionOwner,						// owner
+			inflictor,							// inflictor
+			normalDamage,						// normal damage
+			heavyArmorDamage,					// heavy armor damage
+			innerRadius,						// inner radius
+			outerRadius,						// outer radius
+			0 )									// dist from attacker
 
-    OnThreadEnd(
-        function() : ( inflictor )
-        {
-            if ( IsValid( inflictor ) )
-                inflictor.Destroy()
-        }
-    )
-
-    for ( int i = 0; i < explosions; i++ )
-    {
-        local normalDamage 		= baseNormalDamage
-        local heavyArmorDamage 	= baseHeavyArmorDamage
-        local innerRadius 		= baseInnerRadius
-        local outerRadius 		= baseOuterRadius
-
-        if ( i == 0 && doPhysicsEntityDamage )
-        {
-            normalDamage = 75
-            heavyArmorDamage = 0
-            outerRadius = 600
-        }
-        else
-        {
-            outerRadius = 750
-        }
-
-        entity explosionOwner = GetExplosionOwner( e )
-
-        if ( outerRadius < innerRadius )
-            outerRadius = innerRadius
-
-        if ( hasNukeDamageOverride ) 
-        {
-            if ( i == 0 && doPhysicsEntityDamage )
-            {
-                normalDamage = nukeDamageStruct.damage
-                heavyArmorDamage = 0
-                innerRadius = nukeDamageStruct.innerRadius
-                outerRadius = maxint( innerRadius, int( nukeDamageStruct.outerRadius * 0.8 ) ) 
-            }
-            else 
-            {
-                normalDamage = nukeDamageStruct.damage
-                heavyArmorDamage = nukeDamageStruct.damageHeavyArmor
-                innerRadius = nukeDamageStruct.innerRadius
-                outerRadius = nukeDamageStruct.outerRadius
-            }
-
-            RadiusDamage( 
-                origin,								
-                explosionOwner,						
-                inflictor,							
-                normalDamage,						
-                heavyArmorDamage,					
-                innerRadius,						
-                outerRadius,						
-                nukeDamageStruct.explosionFlags,	
-                0,									
-                nukeDamageStruct.explosionForce,	
-                nukeDamageStruct.damageFlags,		
-                nukeDamageStruct.damageSourceId		
-            )
-        }
-        else 
-        {
-            RadiusDamage_DamageDef( damagedef_nuclear_core,
-                origin,								
-                explosionOwner,						
-                inflictor,							
-                normalDamage,						
-                heavyArmorDamage,					
-                innerRadius,						
-                innerRadius,						
-                0 )									
-        }
-
-        wait waitPerExplosion
-    }
-
-    WaitFrame() 
-    if ( freezeDuringNuke && IsValid( titan ) )
-    {
-        if ( titan.IsFrozen() )
-            titan.Unfreeze()
-        titan.Destroy()
-    }
+		wait waitPerExplosion
+	}
 }
 
-function NuclearCoreExplosion( vector origin, e )
+void function NuclearCoreExplosion( vector origin, e )
 {
-    entity titan = expect entity( e.titan )
+	entity titan = expect entity( e.titan )
 
-    titan.EndSignal( "OnDeath" )
+	titan.EndSignal( "OnDeath" )
 
-    e.needToClearNukeFX = false 
+	e.needToClearNukeFX = false //This thread and NuclearCoreExplosionChainReaction now take responsibility for clearing the FX
 
-    OnThreadEnd(
-        function() : ( e )
-        {
-            ClearNuclearBlueSunEffect( e )
-        }
-    )
+	OnThreadEnd(
+		function() : ( e )
+		{
+			ClearNuclearBlueSunEffect( e )
+		}
+	)
 
-    wait 1.3
-    Assert( IsValid( titan ) )
-    titan.s.silentDeath <- true  
+	wait 1.3
+	Assert( IsValid( titan ) )
+	titan.s.silentDeath <- true  //Don't play normal titan_death_explode in _deathpackage since we're playing titan_nuclear_death_explode
 
-    EmitSoundAtPosition( titan.GetTeam(), origin, "titan_nuclear_death_explode" )
+	EmitSoundAtPosition( titan.GetTeam(), origin, "titan_nuclear_death_explode" )
 
-    titan.s.noLongerCountsForLTS <- true
+	titan.s.noLongerCountsForLTS <- true
 
-    thread NuclearCoreExplosionChainReaction( origin, e )
+	thread NuclearCoreExplosionChainReaction( origin, e )
 
-    bool freezeDuringNuke = false
-    entity soul = titan.GetTitanSoul()
-    if ( IsValid( soul ) )
-        freezeDuringNuke = true
-    if ( IsAlive( titan ) )
-    {
-        if ( freezeDuringNuke )
-            titan.Die( e.attacker, e.inflictor, { scriptType = DF_EXPLOSION, damageSourceId = e.damageSourceId } )
-        else 
-            titan.Die( e.attacker, e.inflictor, { scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL, damageSourceId = e.damageSourceId } )
-    }
+	if ( IsAlive( titan ) )
+		titan.Die( e.attacker, e.inflictor, { scriptType = DF_EXPLOSION, damageType = DMG_REMOVENORAGDOLL, damageSourceId = e.damageSourceId } )
 }
 
-function TitanEjectPlayerForNPCs( entity ejectTitan, bool instant = false ) 
+void function TitanEjectPlayerForNPCs( entity ejectTitan, bool instant = false ) //TODO: This needs a refactor badly. Way too long and unwieldy. I think it was a mistake to handle both player Titan eject and NPC titan eject in the same function
 {
-    ejectTitan.Signal( "EjectAttempt" )
+	ejectTitan.Signal( "EjectAttempt" )
 
-    Assert( ejectTitan.IsTitan() )
-    Assert( IsAlive( ejectTitan ), "Ejecting titan expected to be alive. IsPlayer? " + ejectTitan.IsPlayer() + " ent: " + ejectTitan )
+	Assert( ejectTitan.IsTitan() )
+	Assert( IsAlive( ejectTitan ), "Ejecting titan expected to be alive. IsPlayer? " + ejectTitan.IsPlayer() + " ent: " + ejectTitan )
 
-    if ( ejectTitan.ContextAction_IsActive() )
-        return
+	if ( ejectTitan.ContextAction_IsActive() )
+		return
 
-    entity soul = ejectTitan.GetTitanSoul()
+	entity soul = ejectTitan.GetTitanSoul()
 
-    if ( soul.IsEjecting() )
-        return
+	if ( soul.IsEjecting() )
+		return
 
-    if ( ejectTitan.IsPlayer() )
+	if ( ejectTitan.IsPlayer() )
+	{
+		if ( IsPlayerDisembarking( ejectTitan ) )
+			return
+	}
+
+	table e = {}
+	e.titan <- ejectTitan
+	e.team <- ejectTitan.GetTeam()
+
+	e.player <- null
+	e.npcPilot <- null
+	bool ejectTitanHasNpcPilot = false
+	if ( ejectTitan.IsPlayer() )
+		e.player = ejectTitan
+
+    if ( AttritionExtendedRecode_TitanHasNpcPilot( ejectTitan ) )
     {
-        if ( IsPlayerDisembarking( ejectTitan ) )
-            return
+        ejectTitanHasNpcPilot = true
+        ejectTitan.kv.allowShoot = 0
+        ForceTitanSustainedDischargeEnd( ejectTitan )
     }
 
-    local e = {}
-    e.titan <- ejectTitan
-    e.team <- ejectTitan.GetTeam()
+	e.nukeFX <- []
+	e.attacker <- ( "attacker" in soul.lastAttackInfo ) ? soul.lastAttackInfo.attacker : null
+	e.inflictor <- ( "inflictor" in soul.lastAttackInfo ) ? soul.lastAttackInfo.inflictor : null
+	e.damageSourceId <- ( "damageSourceId" in soul.lastAttackInfo ) ? soul.lastAttackInfo.damageSourceId : -1
+	e.damageTypes <- soul.lastAttackInfo.scriptType
+	e.overrideAttacker <- soul.soul.nukeAttacker
 
-    e.player <- null
-    e.npcPilot <- null
-    e.ejectTitanHasNpcPilot <- false
-    if ( ejectTitan.IsPlayer() )
-        e.player = ejectTitan
-    
-    e.pilotModel <- null
+	int nuclearPayload = 0
+	if ( IsValid( e.player ) )
+		nuclearPayload = GetNuclearPayload( ejectTitan )
+	else
+		nuclearPayload = NPC_GetNuclearPayload( ejectTitan )
 
-        if ( AttritionExtendedRecode_TitanHasNpcPilot( ejectTitan ) )
+	e.nuclearPayload <- nuclearPayload
+
+	if ( e.nuclearPayload )
+	{
+		e.needToClearNukeFX <- false
+		e.nukeFXInfoTarget <- CreateEntity( "info_target" )
+		e.nukeFXInfoTarget.kv.spawnflags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
+		DispatchSpawn( e.nukeFXInfoTarget )
+
+		AI_CreateDangerousArea_DamageDef( damagedef_nuclear_core, e.nukeFXInfoTarget, ejectTitan.GetTeam(), true, true )
+	}
+
+	entity rodeoPilot = GetRodeoPilot( ejectTitan )
+	if ( rodeoPilot && rodeoPilot == e.attacker )
+		e.damageSourceId = eDamageSourceId.rodeo_forced_titan_eject
+
+	ejectTitan.Signal( "TitanEjectionStarted" )
+	ejectTitan.EndSignal( "OnDeath" )
+
+	OnThreadEnd(
+		function() : ( e, ejectTitan )
+		{
+			if ( IsAlive( ejectTitan ) )
+			{
+				thread ClearEjectInvulnerability( ejectTitan )
+                if ( IsValid( ejectTitan.GetOwner() ) && IsAlive( ejectTitan.GetOwner() ) )
+                thread ClearEjectInvulnerability( ejectTitan.GetOwner() )
+			}
+			else if ( IsValid( ejectTitan ) )
+			{
+				ejectTitan.ClearInvulnerable()
+			}
+
+			if ( IsValid( e.player ) )
+			{
+				e.player.UnfreezeControlsOnServer()
+			}
+
+			entity titan = expect entity( e.titan )
+
+			if ( e.nuclearPayload )
+			{
+				if ( e.needToClearNukeFX )
+				{
+					if ( IsAlive( titan ) )
+					{
+						//Nuclear eject sequence got interrupted early, probably because Pilot died
+						Assert( titan.IsTitan() )
+						thread NuclearCoreExplosion( titan.GetOrigin(), e )
+					}
+					else
+					{
+						//Nuclear eject fired, needs to be cleaned up
+						ClearNuclearBlueSunEffect( e )
+					}
+				}
+				//Nuclear core handles cleaning up the left over titan by itself, so just return out early
+				return
+			}
+
+			if ( !IsAlive( titan ) )
+				return
+
+			entity soul = titan.GetTitanSoul()
+			if ( !soul.soul.diesOnEject )
+				return
+
+			Assert( titan.IsTitan() )
+			Assert( soul.IsEjecting() )
+			titan.Die( e.attacker, e.inflictor, { scriptType = damageTypes.titanEjectExplosion | e.damageTypes, damageSourceId = e.damageSourceId } )
+		}
+	)
+
+	soul.SetEjecting( true )
+	ejectTitan.SetInvulnerable()  //Give both player and ejectTitan temporary invulnerability in the course of ejecting. Player invulnerability gets cleared in ClearEjectInvulnerability
+
+	#if SERVER
+		StatusEffect_StopAll( expect entity( e.titan ), eStatusEffect.lockon_detected_titan )
+	#endif
+
+	#if HAS_STATS
+	if ( IsValid( e.player ) )
+	{
+		UpdatePlayerStat( expect entity( e.player ), "misc_stats", "timesEjected" )
+		if ( nuclearPayload )
+			UpdatePlayerStat( expect entity( e.player ), "misc_stats", "timesEjectedNuclear" )
+	}
+	#endif
+	#if SERVER && MP
+		PIN_AddToPlayerCountStat( expect entity( e.player ), "ejects" )
+	#endif
+
+	if ( !ejectTitan.ContextAction_IsBusy() )
+		ejectTitan.ContextAction_SetBusy()
+
+	bool standing = true
+	if ( IsValid( e.player ) )
+		standing = expect bool ( e.player.IsStanding() )
+	else
+		standing = soul.GetStance() == STANCE_STAND
+
+	string titanEjectAnimPlayer, titanEjectAnimTitan
+	if ( standing )
+	{
+		if ( nuclearPayload )
+		{
+			titanEjectAnimPlayer = "at_nuclear_eject_standing"
+			titanEjectAnimTitan = "at_nuclear_eject_standing_idle"
+		}
+		else
+		{
+			titanEjectAnimPlayer = "at_MP_eject_stand_start"
+			titanEjectAnimTitan = "at_MP_eject_stand_end"
+		}
+	}
+	else
+	{
+		titanEjectAnimPlayer = "at_MP_eject_crouch_idle"
+		titanEjectAnimTitan = "at_MP_eject_crouch_start"
+	}
+
+	float ejectDuration // = TITAN_PLAYEREJECT_DURATION
+	if ( nuclearPayload )
+		ejectDuration = TITAN_PLAYEREJECT_DURATION * 2.0
+	else
+		ejectDuration = TITAN_PLAYEREJECT_DURATION
+
+//	ejectDuration = ejectTitan.GetSequenceDuration( titanEjectAnimPlayer )
+
+	if ( nuclearPayload )
+	{
+		array<entity> players = GetPlayerArray()
+		int frequency = 40
+		float duration = 8.5
+		vector origin = ejectTitan.GetOrigin()
+
+		foreach ( guy in players )
+		{
+			if ( guy == e.player )
+				continue
+
+			if ( !IsAlive( guy ) )
+				continue
+
+			float dist = Distance( guy.GetOrigin(), origin )
+			float result = Graph( dist, 750, 1500, 5.0, 0.0 )
+			Remote_CallFunction_Replay( guy, "ServerCallback_ScreenShake", result, frequency, duration )
+		}
+
+		e.needToClearNukeFX = true
+		e.nukeFXInfoTarget.SetParent( ejectTitan, "CHESTFOCUS" ) //Play FX and sound on entity since we need something that lasts across the player titan -> pilot transition
+		e.nukeFX.append( PlayFXOnEntity( TITAN_NUCLEAR_CORE_NUKE_FX, expect entity( e.nukeFXInfoTarget ) ) )
+		e.nukeFX.append( e.nukeFXInfoTarget )
+		//ejectDuration += 0.5
+
+		EmitSoundOnEntity( e.nukeFXInfoTarget, "titan_nuclear_death_charge" )
+	}
+
+	entity rodeoPlayer = GetRodeoPilot( ejectTitan )
+	if ( IsValid( rodeoPlayer ) && rodeoPlayer.IsPlayer() )
+		Remote_CallFunction_Replay( rodeoPlayer, "ServerCallback_RodeoerEjectWarning", ejectTitan.GetTitanSoul().GetEncodedEHandle(), TITAN_PLAYEREJECT_DELAY + ejectDuration )
+
+	if ( IsValid( e.player ) )
+		e.player.CockpitStartEject()
+
+	float blendDelay = 0.15
+	vector origin = ejectTitan.GetOrigin()
+
+	if ( !instant )
+	{
+		if ( IsValid( e.player ) )
+		{
+			Remote_CallFunction_Replay( e.player, "ServerCallback_EjectConfirmed" )
+			EmitSoundAtPositionExceptToPlayer( e.team, ejectTitan.GetOrigin(), e.player, "Titan_Eject_Servos_3P" )
+			e.player.FreezeControlsOnServer()
+		}
+		else
+		{
+			EmitSoundAtPosition( e.team, ejectTitan.GetOrigin(), "Titan_Eject_Servos_3P" )
+		}
+
+		if ( !ejectTitan.IsTitan() )
+		{
+			// must be a titan, something bad has happened
+			KillStuckPlayer( ejectTitan )
+			return
+		}
+
+		ejectTitan.Anim_Play( titanEjectAnimPlayer )
+
+		wait blendDelay  // wait for ejectTitan to blend into disembark pose
+
+	    Assert( ejectDuration > MAX_EJECT_LATENCY_COMPENSATION )
+	    wait ejectDuration - MAX_EJECT_LATENCY_COMPENSATION
+
+	    if ( IsValid( e.player ) )
+	    {
+		    // subtract player latency so that the client gets the eject at the same time they finish the animation
+		    float latency = expect entity( e.player ).GetLatency()
+		    float waitduration = MAX_EJECT_LATENCY_COMPENSATION - min( latency, MAX_EJECT_LATENCY_COMPENSATION )
+		    //printt( "Eject: compensating for " + latency + " seconds of latency; wait " + waitduration )
+		    wait waitduration
+		}
+	}
+
+	// Defensive fix for if player becomes a spectator between initiating eject and now
+	if ( IsValid( e.player ) && e.player.GetPlayerSettings() == "spectator" )
+		return
+
+	if ( ejectTitan.GetTitanSoul() == null )
+		return
+
+	if ( IsValid( e.player ) )
+		EmitSoundAtPositionExceptToPlayer( e.team, ejectTitan.GetOrigin(), e.player, "Titan_Eject_PilotLaunch_3P" )
+	else
+		EmitSoundAtPosition( e.team, ejectTitan.GetOrigin(), "Titan_Eject_PilotLaunch_3P" )
+
+	entity titan
+	if ( IsValid( e.player ) )
+	{
+		entity player = expect entity( e.player )
+		titan = CreateAutoTitanForPlayer_ForTitanBecomesPilot( player )
+		DispatchSpawn( titan )
+		player.p.lastEjectTime = Time()
+		HolsterAndDisableWeapons( player ) //Primarily done to not play the holster animation, then deploy animation of weapon if we happened to switch the active weapon in GiveWeaponsFromStoredArray()
+		TitanBecomesPilot( ejectTitan, titan )
+		DeployAndEnableWeapons( player )//Undo Holster
+		player.UnfreezeControlsOnServer()
+	}
+	else
+	{
+		// the titan is an AI
+		titan = ejectTitan
+	}
+
+    if ( ejectTitanHasNpcPilot )
+    {
+        entity npcPilot = AttritionExtendedRecode_NpcTitanBecomesPilot( ejectTitan )
+        e.npcPilot = npcPilot
+        if ( IsAlive( npcPilot ) )
         {
-            e.ejectTitanHasNpcPilot = true
-            ejectTitan.kv.allowShoot = 0
-            ForceTitanSustainedDischargeEnd( ejectTitan )
-        }
-
-    e.nukeFX <- []
-    e.attacker <- ( "attacker" in soul.lastAttackInfo ) ? soul.lastAttackInfo.attacker : null
-    e.inflictor <- ( "inflictor" in soul.lastAttackInfo ) ? soul.lastAttackInfo.inflictor : null
-    e.damageSourceId <- ( "damageSourceId" in soul.lastAttackInfo ) ? soul.lastAttackInfo.damageSourceId : -1
-    e.damageTypes <- soul.lastAttackInfo.scriptType
-    e.overrideAttacker <- soul.soul.nukeAttacker
-
-    e.hasNuclearCore <- false
-    if ( ejectTitan.IsPlayer() )
-    {
-        if ( PlayerHasWeapon( ejectTitan, "mp_titanability_nuke_eject" ) ) 
-        {
-            soul.EnableDoomed()
-            ejectTitan.SetDoomed()
-            DoomTitan( ejectTitan )
-            if ( PlayerHasPassive( ejectTitan, ePassives.PAS_BUILD_UP_NUCLEAR_CORE ) )
-                e.hasNuclearCore = true 
-            else
-                GivePassive( ejectTitan, ePassives.PAS_BUILD_UP_NUCLEAR_CORE ) 
+            npcPilot.SetInvulnerable()
+            thread NPCPilotEjectingAnimation( npcPilot )
         }
     }
 
-    local nuclearPayload = 0
-    if ( IsValid( e.player ) )
-        nuclearPayload = GetNuclearPayload( ejectTitan )
-    else
-        nuclearPayload = NPC_GetNuclearPayload( ejectTitan )
+	vector titanOrigin = titan.GetOrigin()
 
-    e.nuclearPayload <- nuclearPayload
+	// HACKY, surprised there isn't a wrapper for this yet
+	if ( !( "disableAutoTitanConversation" in titan.s ) )
+		titan.s.disableAutoTitanConversation <- true // no auto titan chatter
 
-    if ( e.nuclearPayload )
-    {
-        e.needToClearNukeFX <- false
-        e.nukeFXInfoTarget <- CreateEntity( "info_target" )
-        e.nukeFXInfoTarget.kv.spawnflags = SF_INFOTARGET_ALWAYS_TRANSMIT_TO_CLIENT
-        DispatchSpawn( e.nukeFXInfoTarget )
+	titan.SetInvulnerable() //Titan dies at the end of eject sequence by script
+	titan.SetNPCPriorityOverride_NoThreat()	// AI shouldn't consider this ejecting titan as an enemy and shoot it, etc
 
-        
-        
-    }
+	if ( e.nuclearPayload )
+	{
+		e.nukeFXInfoTarget.SetParent( titan, "CHESTFOCUS" )
+	}
 
-    entity rodeoPilot = GetRodeoPilot( ejectTitan )
-    if ( rodeoPilot && rodeoPilot == e.attacker )
-        e.damageSourceId = eDamageSourceId.rodeo_forced_titan_eject
-    
-    ejectTitan.EndSignal( "OnDeath" )
+	bool isInDeepWater = expect bool ( "isInDeepWater" in ejectTitan.s && ejectTitan.s.isInDeepWater )
 
-    ejectTitan.Signal( "TitanEjectionStarted" )
+	if ( e.nuclearPayload || isInDeepWater )
+	{
+		thread TitanNonSolidTemp( titan )
+	}
 
-    OnThreadEnd(
-        function() : ( e, ejectTitan )
-        {
-            if ( IsAlive( ejectTitan ) )
-            {
-                thread ClearEjectInvulnerability( ejectTitan )
+	ejectTitan.Anim_Stop()
+	e.titan = titan
 
-                if ( ejectTitan.IsPlayer() )
-                {
-                    if ( !e.hasNuclearCore ) 
-                        TakePassive( ejectTitan, ePassives.PAS_BUILD_UP_NUCLEAR_CORE ) 
-                }
-                    if ( expect bool( e.ejectTitanHasNpcPilot ) )
-                    {
-                        entity npcPilot = expect entity( e.npcPilot )
-                        if ( IsAlive( npcPilot ) )
-                            thread ClearEjectInvulnerability( npcPilot )
-                        if ( IsAlive( ejectTitan ) )
-                            ejectTitan.kv.allowShoot = 1
-                    }
-            }
-            else if ( IsValid( ejectTitan ) )
-            {
-                ejectTitan.ClearInvulnerable()
-            }
+	if ( ejectTitan.ContextAction_IsBusy() )
+		ejectTitan.ContextAction_ClearBusy()
 
-            if ( IsValid( e.player ) )
-            {
-                e.player.UnfreezeControlsOnServer()
-            }
+	FirstPersonSequenceStruct sequence
+	sequence.thirdPersonAnim = titanEjectAnimTitan
+	sequence.teleport = true
+	thread FirstPersonSequence( sequence, titan )
 
-            entity titan = expect entity( e.titan )
+	if ( IsValid( e.player ) )
+	{
+		entity player = expect entity( e.player )
+		thread TempAirControl( player )
 
-            if ( e.nuclearPayload )
-            {
-                if ( e.needToClearNukeFX )
-                {
-                    if ( IsAlive( titan ) )
-                    {
-                        Assert( titan.IsTitan() )
-                        thread NuclearCoreExplosion( titan.GetOrigin(), e )
-                    }
-                    else
-                    {
-                        ClearNuclearBlueSunEffect( e )
-                    }
-                }
-                return
-            }
+		PutEntityInSafeSpot( player, titan, null, origin + <0,0,60>, player.GetOrigin() + <0,0,60> )
+	}
 
-            if ( !IsAlive( titan ) )
-                return
+	vector ejectAngles = titan.GetAngles()
+	ejectAngles.x = 270
+	//ejectAngles.x = RandomIntRange( 263, 277 ) //5 degrees back of straight up was 245
 
-            entity soul = titan.GetTitanSoul()
-            if ( !soul.soul.diesOnEject )
-                return
+	float speed = RandomFloatRange( 1500, 1700 ) //was 1000
+	if ( nuclearPayload )
+		speed += 400
 
-            Assert( titan.IsTitan() )
-            Assert( soul.IsEjecting() )
-            titan.Die( e.attacker, e.inflictor, { scriptType = damageTypes.titanEjectExplosion | e.damageTypes, damageSourceId = e.damageSourceId } )
-        }
-    )
+	if ( isInDeepWater )
+		speed += 1000
 
-    soul.SetEjecting( true )
-    ejectTitan.SetInvulnerable()  
+	e.singleRodeoPilot <- null //HACKY. Need to store it off because after time passes we don't have a handle to the rider anymore. Terribly hacky
 
-    #if SERVER
-        StatusEffect_StopAll( expect entity( e.titan ), eStatusEffect.lockon_detected_titan )
-    #endif
+	entity rider = GetRodeoPilot( titan )
+	if ( rider && rider.GetParent() == titan )
+	{
+		e.singleRodeoPilot = rider //Need to store it off because after time passes we don't have a handle to the rider anymore. Terribly hacky
+		if ( IsValid( e.player ) )
+			thread TemporarilyNonSolidPlayer( expect entity( e.player ) )
 
-    #if HAS_STATS
-    if ( IsValid( e.player ) )
-    {
-        UpdatePlayerStat( expect entity( e.player ), "misc_stats", "timesEjected" )
-        if ( nuclearPayload )
-            UpdatePlayerStat( expect entity( e.player ), "misc_stats", "timesEjectedNuclear" )
-    }
-    #endif
-    #if SERVER && MP
-        PIN_AddToPlayerCountStat( expect entity( e.player ), "ejects" )
-    #endif
+		thread TemporarilyNonSolidPlayer( rider )
 
-    if ( !ejectTitan.ContextAction_IsBusy() )
-        ejectTitan.ContextAction_SetBusy()
-
-    local standing = true
-    if ( IsValid( e.player ) )
-        standing = e.player.IsStanding()
-    else
-        standing = soul.GetStance() == STANCE_STAND
-
-    local titanEjectAnimPlayer, titanEjectAnimTitan
-    if ( standing )
-    {
-        if ( nuclearPayload )
-        {
-            titanEjectAnimPlayer = "at_nuclear_eject_standing"
-            titanEjectAnimTitan = "at_nuclear_eject_standing_idle"
-        }
-        else
-        {
-            titanEjectAnimPlayer = "at_MP_eject_stand_start"
-            titanEjectAnimTitan = "at_MP_eject_stand_end"
-        }
-    }
-    else
-    {
-        titanEjectAnimPlayer = "at_MP_eject_crouch_idle"
-        titanEjectAnimTitan = "at_MP_eject_crouch_start"
-    }
-
-    float ejectDuration 
-    if ( nuclearPayload )
-        ejectDuration = TITAN_PLAYEREJECT_DURATION * 2.0
-    else
-        ejectDuration = TITAN_PLAYEREJECT_DURATION
-
-
-    if ( nuclearPayload )
-    {
-        array<entity> players = GetPlayerArray()
-        local frequency = 40
-        local duration = 8.5
-        vector origin = ejectTitan.GetOrigin()
-
-        foreach ( guy in players )
-        {
-            if ( guy == e.player )
-                continue
-
-            if ( !IsAlive( guy ) )
-                continue
-
-            float dist = Distance( guy.GetOrigin(), origin )
-            float result = Graph( dist, 750, 1500, 5.0, 0.0 )
-            Remote_CallFunction_Replay( guy, "ServerCallback_ScreenShake", result, frequency, duration )
-        }
-
-        e.needToClearNukeFX = true
-        e.nukeFXInfoTarget.SetParent( ejectTitan, "CHESTFOCUS" ) 
-        e.nukeFX.append( PlayFXOnEntity( TITAN_NUCLEAR_CORE_NUKE_FX, expect entity( e.nukeFXInfoTarget ) ) )
-        e.nukeFX.append( e.nukeFXInfoTarget )
-
-        EmitSoundOnEntity( e.nukeFXInfoTarget, "titan_nuclear_death_charge" )
-    }
-
-    entity rodeoPlayer = GetRodeoPilot( ejectTitan )
-    if ( IsValid( rodeoPlayer ) && rodeoPlayer.IsPlayer() )
-        Remote_CallFunction_Replay( rodeoPlayer, "ServerCallback_RodeoerEjectWarning", ejectTitan.GetTitanSoul().GetEncodedEHandle(), TITAN_PLAYEREJECT_DELAY + ejectDuration )
-
-    if ( IsValid( e.player ) )
-        e.player.CockpitStartEject()
-
-    float blendDelay = 0.15
-    vector origin = ejectTitan.GetOrigin()
-
-    if ( !instant )
-    {
-        if ( IsValid( e.player ) )
-        {
-            Remote_CallFunction_Replay( e.player, "ServerCallback_EjectConfirmed" )
-            EmitSoundAtPositionExceptToPlayer( e.team, ejectTitan.GetOrigin(), e.player, "Titan_Eject_Servos_3P" )
-            e.player.FreezeControlsOnServer()
-        }
-        else
-        {
-            EmitSoundAtPosition( e.team, ejectTitan.GetOrigin(), "Titan_Eject_Servos_3P" )
-        }
-
-        if ( !ejectTitan.IsTitan() )
-        {
-            KillStuckPlayer( ejectTitan )
-            return
-        }
-
-        bool npcStopsMoving = true 
-        if ( npcStopsMoving && ejectTitan.IsNPC() )
-        {
-            
-            
-            ejectTitan.Anim_ScriptedPlay( titanEjectAnimPlayer )
-        }
-        else
-            ejectTitan.Anim_Play( titanEjectAnimPlayer ) 
-
-        wait blendDelay  
-
-        Assert( ejectDuration > MAX_EJECT_LATENCY_COMPENSATION )
-        wait ejectDuration - MAX_EJECT_LATENCY_COMPENSATION
-
-        if ( IsValid( e.player ) )
-        {
-            float latency = expect entity( e.player ).GetLatency()
-            float waitduration = MAX_EJECT_LATENCY_COMPENSATION - min( latency, MAX_EJECT_LATENCY_COMPENSATION )
-            wait waitduration
-        }
-    }
-
-    if ( IsValid( e.player ) && e.player.GetPlayerSettings() == "spectator" )
-        return
-
-    if ( ejectTitan.GetTitanSoul() == null )
-        return
-
-    if ( IsValid( e.player ) )
-        EmitSoundAtPositionExceptToPlayer( e.team, ejectTitan.GetOrigin(), e.player, "Titan_Eject_PilotLaunch_3P" )
-    else
-        EmitSoundAtPosition( e.team, ejectTitan.GetOrigin(), "Titan_Eject_PilotLaunch_3P" )
-
-    entity titan
-    if ( IsValid( e.player ) )
-    {
-        entity player = expect entity( e.player )
-        titan = CreateAutoTitanForPlayer_ForTitanBecomesPilot( player )
-        DispatchSpawn( titan )
-        player.p.lastEjectTime = Time()
-        HolsterAndDisableWeapons( player ) 
-        TitanBecomesPilot( ejectTitan, titan )
-        DeployAndEnableWeapons( player )
-        player.UnfreezeControlsOnServer()
-    }
-    else
-    {
-        titan = ejectTitan
-    }
-
-        if ( expect bool( e.ejectTitanHasNpcPilot ) )
-        {
-        e.npcPilot = AttritionExtendedRecode_NpcTitanBecomesPilot( ejectTitan )
-        entity npcPilot = expect entity( e.npcPilot )
-            if ( IsAlive( npcPilot ) )
-            {
-                npcPilot.SetInvulnerable()
-                thread NPCPilotEjectingAnimation( npcPilot )
-            }
-        }
-
-    vector titanOrigin = titan.GetOrigin()
-
-    if ( !( "disableAutoTitanConversation" in titan.s ) )
-        titan.s.disableAutoTitanConversation <- true 
-
-    titan.SetInvulnerable() 
-    titan.SetNPCPriorityOverride_NoThreat()	
-
-    if ( e.nuclearPayload )
-    {
-        e.nukeFXInfoTarget.SetParent( titan, "CHESTFOCUS" )
-    }
-
-    local isInDeepWater = ( "isInDeepWater" in ejectTitan.s && ejectTitan.s.isInDeepWater )
-
-    if ( e.nuclearPayload || isInDeepWater )
-    {
-        thread TitanNonSolidTemp( titan )
-    }
-
-    ejectTitan.Anim_Stop()
-    e.titan = titan
-
-    if ( ejectTitan.ContextAction_IsBusy() )
-        ejectTitan.ContextAction_ClearBusy()
-
-    FirstPersonSequenceStruct sequence
-    sequence.thirdPersonAnim = expect string ( titanEjectAnimTitan )
-    sequence.teleport = true
-    thread FirstPersonSequence( sequence, titan )
-
-    if ( IsValid( e.player ) )
-    {
-        entity player = expect entity( e.player )
-        thread TempAirControl( player )
-
-        PutEntityInSafeSpot( player, titan, null, origin + <0,0,60>, player.GetOrigin() + <0,0,60> )
-    }
-
-    vector ejectAngles = titan.GetAngles()
-    ejectAngles.x = 270
-
-    float speed = RandomFloatRange( 1500, 1700 ) 
-    if ( nuclearPayload )
-        speed += 400
-
-    if ( isInDeepWater )
-        speed += 1000
-
-    e.singleRodeoPilot <- null 
-
-    entity rider = GetRodeoPilot( titan )
-    if ( rider && rider.GetParent() == titan )
-    {
-        e.singleRodeoPilot = rider 
-        if ( IsValid( e.player ) )
-            thread TemporarilyNonSolidPlayer( expect entity( e.player ) )
-
-        thread TemporarilyNonSolidPlayer( rider )
-
-        vector riderEjectAngles = AnglesCompose( ejectAngles, < 5, 0, 0 > )
+		vector riderEjectAngles = AnglesCompose( ejectAngles, < 5, 0, 0 > )
 
         float gravityScale = 1.0
 
         if ( rider.IsPlayer() )
             gravityScale = expect float ( rider.GetPlayerSettingsField( "gravityscale" ) )
+
         vector riderVelocity = AnglesToForward( riderEjectAngles ) * (speed * gravityScale) * 0.95
 
         if ( rider.IsPlayer() )
@@ -3271,102 +3161,94 @@ function TitanEjectPlayerForNPCs( entity ejectTitan, bool instant = false )
         else
             rider.Die( titan, titan, { force = Vector( 0.4, 0.2, 0.3 ), scriptType = DF_GIB, damageSourceId = eDamageSourceId.titan_explosion } )
 
-        wait 0.05
-    }
+		wait 0.05
+	}
 
-    if ( IsAlive( expect entity( e.player ) ) )
-    {
-        if ( PlayerHasPassive( expect entity( e.player ), ePassives.PAS_PHASE_EJECT ) )
-        {
-            PhaseShift( expect entity( e.player ), 0.0, 3.0 )
-            ejectAngles.x = 315
-            speed *= 0.5
-        }
-        ejectAngles = AnglesCompose( ejectAngles, < -5, 0, 0 > )
+	if ( IsAlive( expect entity( e.player ) ) )
+	{
+		if ( PlayerHasPassive( expect entity( e.player ), ePassives.PAS_PHASE_EJECT ) )
+		{
+			PhaseShift( expect entity( e.player ), 0.0, 3.0 )
+			ejectAngles.x = 315
+			speed *= 0.5
+		}
+		ejectAngles = AnglesCompose( ejectAngles, < -5, 0, 0 > )
 
-        float gravityScale = expect float ( e.player.GetPlayerSettingsField( "gravityscale" ) )
-        vector velocity = AnglesToForward( ejectAngles ) * speed * sqrt( gravityScale )
-        e.player.SetOrigin( e.player.GetOrigin() )
-        e.player.SetVelocity( velocity )
-        vector player_look_angles = titan.GetAngles()
-        player_look_angles.x = 80  
-        e.player.SetAngles( player_look_angles )
+		float gravityScale = expect float ( e.player.GetPlayerSettingsField( "gravityscale" ) )
+		vector velocity = AnglesToForward( ejectAngles ) * speed * sqrt( gravityScale )
+		e.player.SetOrigin( e.player.GetOrigin() )
+		e.player.SetVelocity( velocity )
+		vector player_look_angles = titan.GetAngles()
+		player_look_angles.x = 80  //was 35
+		e.player.SetAngles( player_look_angles )
 
-        thread EjectFlightTracker( expect entity( e.player ) )
+		thread EjectFlightTracker( expect entity( e.player ) )
 
-        entity rider = expect entity( e.singleRodeoPilot )
-        if ( IsAlive( rider ) && e.player.GetTeam() != rider.GetTeam() )
-            thread LookAtEachOther( rider, expect entity( e.player ) )
-    }
-        else if ( expect bool( e.ejectTitanHasNpcPilot ) && IsAlive( expect entity( e.npcPilot ) ) )
-        {
-            vector velocity = < 0, 0, speed > 
-            e.npcPilot.SetOrigin( titan.GetOrigin() + Vector(0,0,100) ) 
-            e.npcPilot.SetAngles( titan.GetAngles() )
-            e.npcPilot.SetVelocity( velocity )
+		entity rider = expect entity( e.singleRodeoPilot )
+		if ( IsAlive( rider ) && e.player.GetTeam() != rider.GetTeam() )
+			thread LookAtEachOther( rider, expect entity( e.player ) )
+	}
+	else if ( ejectTitanHasNpcPilot && IsAlive( expect entity( e.npcPilot ) ) )
+	{
+		vector velocity = < 0, 0, speed > //straight up
+		e.npcPilot.SetOrigin( titan.GetOrigin() + Vector(0,0,100) )
+		e.npcPilot.SetAngles( titan.GetAngles() )
+		e.npcPilot.SetVelocity( velocity )
+        e.overrideAttacker = e.npcPilot
+	}
 
-                    e.overrideAttacker = e.npcPilot
-        }
-        else if ( IsValid( e.pilotModel ) ) 
-        {
-            vector velocity = < 0, 0, speed * 100 > 
-            e.pilotModel.SetOrigin( titan.GetOrigin() + Vector(0,0,100) )
-            e.pilotModel.SetAngles( titan.GetAngles() )
-            e.pilotModel.BecomeRagdoll( velocity, false )
-        }
+	if ( IsValid( e.player ) )
+		TitanEjectVO( expect entity( e.player ), titanOrigin )
 
-    if ( IsValid( e.player ) )
-        TitanEjectVO( expect entity( e.player ), titanOrigin )
+	wait 0.15
 
-    wait 0.15
+	vector explosionOrigin = titanOrigin + Vector( 0, 0, 200 )
 
-    vector explosionOrigin = titanOrigin + Vector( 0, 0, 200 )
+	if ( nuclearPayload )
+	{
+		thread NuclearCoreExplosion( explosionOrigin, e )
+	}
+	else
+	{
+		entity explosionOwner = GetExplosionOwner( e )
+		entity inflictor
+		if ( IsValid( titan ) )
+			inflictor = titan
+		else
+			inflictor = explosionOwner
 
-    if ( nuclearPayload )
-    {
-        thread NuclearCoreExplosion( explosionOrigin, e )
-    }
-    else
-    {
-        entity explosionOwner = GetExplosionOwner( e )
-        entity inflictor
-        if ( IsValid( titan ) )
-            inflictor = titan
-        else
-            inflictor = explosionOwner
+		RadiusDamage(
+			explosionOrigin,				// origin
+			explosionOwner,					// owner
+			inflictor,		 				// inflictor
+			1,								// normal damage
+			1800,							// heavy armor damage
+			100,							// inner radius
+			300,							// outer radius
+			SF_ENVEXPLOSION_NO_DAMAGEOWNER,	// explosion flags
+			0, 								// distanceFromAttacker
+			0, 								// explosionForce
+			damageTypes.explosive,			// damage flags
+			eDamageSourceId.titan_explosion	// damage source id
+		)
 
-            RadiusDamage(
-                explosionOrigin,				
-                explosionOwner,					
-                inflictor,		 				
-                1,								
-                1800,							
-                100,							
-                300,							
-                SF_ENVEXPLOSION_NO_DAMAGEOWNER,	
-                0, 								
-                0, 								
-                damageTypes.explosive,			
-                eDamageSourceId.titan_explosion	
-            )
+		entity shake = CreateEntity( "env_shake" )
+		shake.SetOrigin( titanOrigin )
+		shake.kv.amplitude = 12  //1-16
+		shake.kv.duration = 1
+		shake.kv.frequency = 100 //.001 - 255
+		shake.kv.radius = 1000
+		shake.kv.spawnflags = 4 //in air
+		DispatchSpawn( shake )
+		shake.Fire( "StartShake" )
+		shake.Kill_Deprecated_UseDestroyInstead( 1 )
+	}
 
-        entity shake = CreateEntity( "env_shake" )
-        shake.SetOrigin( titanOrigin )
-        shake.kv.amplitude = 12  
-        shake.kv.duration = 1
-        shake.kv.frequency = 100 
-        shake.kv.radius = 1000
-        shake.kv.spawnflags = 4 
-        DispatchSpawn( shake )
-        shake.Fire( "StartShake" )
-        shake.Kill_Deprecated_UseDestroyInstead( 1 )
-    }
-
-    if ( IsValid( titan ) )
-    {
-        if ( titan.ContextAction_IsBusy() )
-            titan.ContextAction_ClearBusy()
-    }
+	if ( IsValid( titan ) )
+	{
+		if ( titan.ContextAction_IsBusy() )
+			titan.ContextAction_ClearBusy()
+	}
 }
 
 void function KillStuckPlayer( entity player )
