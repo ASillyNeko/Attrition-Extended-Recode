@@ -12,7 +12,6 @@ global function AttritionExtendedRecode_TitanHasNpcPilot
 global function AttritionExtendedRecode_GetTitanModel
 global function Is_AttritionExtendedRecode_Entity
 global function AttritionExtendedRecode_CustomTitan
-global function AttritionExtendedRecode_CustomTitanCommand
 
 global struct AttritionExtendedRecode_CustomTitanStruct
 {
@@ -162,7 +161,6 @@ void function AttritionExtendedRecode_Init()
     {
         AddCallback_OnNPCKilled( HandleNPCScoreEvent )
     }
-    //AttritionExtendedRecode_CustomTitanCommand( "ASillyNeko", "titan_atlas_vanguard", "npc_titan_auto_atlas_vanguard", "", "npc_titan_atlas_vanguard", "behavior_titan_long_range", "execution_vanguard_kit", 138, 2, true, false, "melee_titan_punch", [], "mp_titanweapon_xo16_vanguard", [], "mp_titanweapon_salvo_rockets", [], "mp_titanability_rearm", [], "mp_titanweapon_stun_laser", [], "mp_titancore_upgrade", [], [ePassives.PAS_VANGUARD_COREMETER], -1 )
     #endif
 }
 #if SERVER
@@ -200,38 +198,6 @@ bool function Is_AttritionExtendedRecode_Entity( entity thing )
 
 void function AttritionExtendedRecode_CustomTitan( AttritionExtendedRecode_CustomTitanStruct CustomTitan )
 {
-    CustomTitan.UID = file.CustomTitans.len()
-    file.CustomTitans.append( CustomTitan )
-}
-
-void function AttritionExtendedRecode_CustomTitanCommand( string Title = "", string TitanSetFile = "", string TitanAiSet = "", string TitanBehavior = "", string EmbarkedTitanAiSet = "", string EmbarkedTitanBehavior = "", string TitanExecutionRef = "", int Camo = -1, int Skin = -1, bool AllowedWithPilot = true, bool AllowedWithoutPilot = true, string Melee = "", array<string> MeleeMods = [], string Weapon = "", array<string> WeaponMods = [], string Ordnance = "", array<string> OrdnanceMods = [], string Utility = "", array<string> UtilityMods = [], string Tactical = "", array<string> TacticalMods = [], string Core = "", array<string> CoreMods = [], array<int> Passives = [], int HP = -1 )
-{
-    AttritionExtendedRecode_CustomTitanStruct CustomTitan
-    CustomTitan.Title = Title
-    CustomTitan.TitanSetFile = TitanSetFile
-    CustomTitan.TitanAiSet = TitanAiSet
-    CustomTitan.TitanBehavior = TitanBehavior
-    CustomTitan.EmbarkedTitanAiSet = EmbarkedTitanAiSet
-    CustomTitan.EmbarkedTitanBehavior = EmbarkedTitanBehavior
-    CustomTitan.TitanExecutionRef = TitanExecutionRef
-    CustomTitan.Camo = Camo
-    CustomTitan.Skin = Skin
-    CustomTitan.AllowedWithPilot = AllowedWithPilot
-    CustomTitan.AllowedWithoutPilot = AllowedWithoutPilot
-    CustomTitan.Melee = Melee
-    CustomTitan.MeleeMods = MeleeMods
-    CustomTitan.Weapon = Weapon
-    CustomTitan.WeaponMods = WeaponMods
-    CustomTitan.Ordnance = Ordnance
-    CustomTitan.OrdnanceMods = OrdnanceMods
-    CustomTitan.Utility = Utility
-    CustomTitan.UtilityMods = UtilityMods
-    CustomTitan.Tactical = Tactical
-    CustomTitan.TacticalMods = TacticalMods
-    CustomTitan.Core = Core
-    CustomTitan.CoreMods = CoreMods
-    CustomTitan.Passives = Passives
-    CustomTitan.HP = HP
     CustomTitan.UID = file.CustomTitans.len()
     file.CustomTitans.append( CustomTitan )
 }
@@ -456,16 +422,16 @@ void function PilotTitanAutoOrDeathEjectHandle( entity titan, var damageInfo )
 	if ( !IsValid( soul ) || soul.IsEjecting() )
 		return
 
-	if ( titan in file.pilotedtitan && file.pilotedtitan[ titan ] && ( (titan in file.deatheject && file.deatheject[titan]) || (titan in file.autoeject && file.autoeject[titan]) ) )
+	if ( titan in file.pilotedtitan && file.pilotedtitan[ titan ] && ( ( titan in file.deatheject && file.deatheject[ titan ] ) || ( titan in file.autoeject && file.autoeject[ titan ] ) ) )
 	{
-		if ( !CanSurviveDamage( titan, damageInfo ) || (titan in file.autoeject && file.autoeject[titan] && GetDoomedState( titan )) )
+		if ( !CanSurviveDamage( titan, damageInfo ) || ( titan in file.autoeject && file.autoeject[ titan ] && GetDoomedState( titan ) ) )
 		{
-		    if ( (titan in file.deatheject && file.deatheject[titan]) && !(titan in file.autoeject && file.autoeject[titan]) )
+		    if ( ( titan in file.deatheject && file.deatheject[ titan ] ) && !( titan in file.autoeject && file.autoeject[ titan ] ) )
 			DamageInfo_SetDamage( damageInfo, 0 )
 
 			thread TitanEjectPlayerForNPCs( titan )
 
-			if ( IsAlive( titan ) && (titan in file.deatheject && file.deatheject[titan]) && !(titan in file.autoeject && file.autoeject[titan]) )
+			if ( IsAlive( titan ) && ( titan in file.deatheject && file.deatheject[ titan ] ) && !( titan in file.autoeject && file.autoeject[ titan ] ) )
 				titan.SetHealth( 1 )
 		}
 	}
@@ -495,14 +461,14 @@ void function EjectWhenDoomed_thread( entity titan )
     soul.EndSignal( "OnDestroy" )
     soul.EndSignal( "OnDeath" )
 
-    if ( !(titan in file.autoeject && file.autoeject[titan]) )
+    if ( !( titan in file.autoeject && file.autoeject[ titan ] ) )
         wait 2.25
     else
         WaitFrame() 
 
     while ( soul.IsDoomed() )
     {
-        if ( !(titan in file.autoeject && file.autoeject[ titan ]) )
+        if ( !( titan in file.autoeject && file.autoeject[ titan ] ) )
             wait 0.2
         else
             WaitFrame()
@@ -521,13 +487,13 @@ void function EjectWhenDoomed_thread( entity titan )
         {
             bool horizontallyClose = Distance2D( titan.GetOrigin(), enemy.GetOrigin() ) < 630
             bool enemyIsEjecting = HasSoul( enemy ) && enemy.GetTitanSoul().IsEjecting()
-            if ( !enemyIsEjecting && horizontallyClose && !enemy.ContextAction_IsMeleeExecution() && CodeCallback_IsValidMeleeExecutionTarget( titan, enemy ) && !CodeCallback_IsValidMeleeExecutionTarget( enemy, titan ) )
+            if ( !enemyIsEjecting && horizontallyClose && !enemy.ContextAction_IsMeleeExecution() && !CodeCallback_IsValidMeleeExecutionTarget( titan, enemy ) && CodeCallback_IsValidMeleeExecutionTarget( enemy, titan ) )
                 shouldEjectTitan = true
         }
 
-        if ( titan in file.pilotedtitan && file.pilotedtitan[ titan ] && (shouldEjectTitan || (titan in file.autoeject && file.autoeject[ titan ])) )
+        if ( titan in file.pilotedtitan && file.pilotedtitan[ titan ] && ( shouldEjectTitan || ( titan in file.autoeject && file.autoeject[ titan ] ) ) )
         {
-            if ( !titan.IsInvulnerable() || (titan in file.autoeject && file.autoeject[ titan ]) )
+            if ( !titan.IsInvulnerable() || ( titan in file.autoeject && file.autoeject[ titan ] ) )
             {
                 thread TitanEjectPlayerForNPCs( titan )
                 return
@@ -1459,6 +1425,7 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
         return
     spawnpoint.s.lastUsedTime <- Time()
     spawnpoint.e.spawnTime = Time()
+    ToggleSpawnpointUse( spawnpoint, true )
     vector pos = spawnpoint.GetOrigin()
     vector angles = spawnpoint.GetAngles()
     entity pod = CreateDropPod( pos, angles )
@@ -1508,6 +1475,8 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
         thread PilotMiniMap( pilot )
     DropPodOpenDoorModded( pod, poddoor )
     thread ActivateFireteamDropPodModded( pod, npcs, poddoor )
+    if ( IsValid( spawnpoint ) )
+        ToggleSpawnpointUse( spawnpoint, false )
 }
 
 void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = false )
@@ -1522,6 +1491,7 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
         return
     spawnpoint.s.lastUsedTime <- Time()
     spawnpoint.e.spawnTime = Time()
+    ToggleSpawnpointUse( spawnpoint, true )
     vector origin = spawnpoint.GetOrigin()
     vector angles = spawnpoint.GetAngles()
     entity pilot = CreateEntity( "npc_pilot_elite" )
@@ -1551,18 +1521,25 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
     AttritionExtendedRecode_CustomTitanStruct CustomTitan = AttritionExtendedRecode_CustomTitanEmpty()
     if ( RandomInt( 100 ) < int( GetCurrentPlaylistVarFloat( "ct_titan_replace_chance", 0.20 ) * 100 ) && file.CustomTitans.len() )
         CustomTitan = clone file.CustomTitans.getrandom()
-    if ( !CustomTitan.AllowedWithoutPilot )
-    {
-        titan = CreateNPCTitan( setFile, team, origin, angles )
-        SetSpawnOption_AISettings( titan, titanSettings )
-    }
-    else
+    if ( ( !withpilot && CustomTitan.AllowedWithoutPilot ) || ( withpilot && CustomTitan.AllowedWithPilot ) )
     {
         titan = CreateNPCTitan( CustomTitan.TitanSetFile, team, origin, angles )
         SetSpawnOption_AISettings( titan, CustomTitan.EmbarkedTitanAiSet )
     }
+    else
+    {
+        titan = CreateNPCTitan( setFile, team, origin, angles )
+        SetSpawnOption_AISettings( titan, titanSettings )
+    }
     DispatchSpawn( titan )
-    if ( CustomTitan.AllowedWithoutPilot )
+
+    file.isattritionextendedrecodeentity[ titan ] <- true
+    if ( withpilot )
+        AttritionExtendedRecode_NpcPilotBecomesTitan( pilot, titan )
+    else
+        pilot.Destroy()
+
+    if ( ( !withpilot && CustomTitan.AllowedWithoutPilot ) || ( withpilot && CustomTitan.AllowedWithPilot ) )
     {
         titan.SetTitle( "[CT] " + CustomTitan.Title )
         file.CustomTitanUID[ titan ] <- CustomTitan.UID
@@ -1572,30 +1549,17 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
             titan.SetHealth( titan.GetMaxHealth() )
         }
     }
-    file.isattritionextendedrecodeentity[ titan ] <- true
-    if ( withpilot )
-        thread AttritionExtendedRecode_NpcPilotBecomesTitan( pilot, titan )
-    else
-        pilot.Destroy()
 
-    if ( !usedomeshieldwarpfall )
+    if ( ( CustomTitan.Camo != -1 && CustomTitan.Skin != -1 ) && ( ( !withpilot && CustomTitan.AllowedWithoutPilot ) || ( withpilot && CustomTitan.AllowedWithPilot ) ) )
     {
-        thread NPCTitanHotdrops( titan, true )
+        titan.SetSkin( CustomTitan.Skin )
+        titan.SetCamo( CustomTitan.Camo )
     }
-    else
-    {
-        thread NPCTitanHotdrops( titan, true, "at_hotdrop_drop_2knee_turbo_upgraded" )
-    }
-    if ( (CustomTitan.Camo == -1 && CustomTitan.Skin == -1) || !CustomTitan.AllowedWithoutPilot )
+    else 
     {
         int randomtitancamo = RandomIntRange( 0, 160 )
         titan.SetSkin( 2 )
         titan.SetCamo( randomtitancamo )
-    }
-    else 
-    {
-        titan.SetSkin( CustomTitan.Skin )
-        titan.SetCamo( CustomTitan.Camo )
     }
     thread AutoTitanLoadout( titan, CustomTitan )
     thread MonitorTitanCore( titan )
@@ -1607,6 +1571,16 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 
     SetStanceKneel( titan.GetTitanSoul() )
     UpdateEnemyMemoryFromTeammates( titan )
+    if ( !usedomeshieldwarpfall )
+    {
+        NPCTitanHotdrops( titan, true )
+    }
+    else
+    {
+        NPCTitanHotdrops( titan, true, "at_hotdrop_drop_2knee_turbo_upgraded" )
+    }
+    if ( IsValid( spawnpoint ) )
+        ToggleSpawnpointUse( spawnpoint, false )
 }
 
 void function TillDeath( entity titan, bool withpilot )
@@ -1673,7 +1647,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
             return false
     }
 
-    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) || ( "spawnTime" in spawnpoint.e && Time() - spawnpoint.e.spawnTime <= 10.0 )  )
+    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) || ( Time() > 10.0 && Time() - spawnpoint.e.spawnTime <= 10.0 ) || spawnpoint.e.spawnPointInUse )
         return false
 
     if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
@@ -1690,6 +1664,12 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
     }
 
     return !spawnpoint.IsVisibleToEnemies( team )
+}
+
+void function ToggleSpawnpointUse( entity spawnpoint, bool value )
+{
+    spawnpoint.s.inuse <- value
+    spawnpoint.e.spawnPointInUse = value
 }
 
 void function DropPodOpenDoorModded( entity pod, entity door )

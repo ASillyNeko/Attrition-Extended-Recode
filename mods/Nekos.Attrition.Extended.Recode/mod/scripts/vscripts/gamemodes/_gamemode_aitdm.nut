@@ -172,7 +172,8 @@ void function Spawner_Threaded( int team )
 				entity node = points[ GetSpawnPointIndex( points, team ) ]
 				node.s.lastUsedTime <- Time()
 				node.e.spawnTime = Time()
-				thread AiGameModes_SpawnReaperModded( node.GetOrigin(), node.GetAngles(), team, "npc_super_spectre_aitdm", ReaperHandler )
+				ToggleSpawnpointUse( node, true )
+				thread AiGameModes_SpawnReaperModded( node, node.GetOrigin(), node.GetAngles(), team, "npc_super_spectre_aitdm", ReaperHandler )
 				wait 1.0
 			}
 		}
@@ -207,7 +208,8 @@ void function Spawner_Threaded( int team )
 					entity node = points[ GetSpawnPointIndex( points, team ) ]
 					node.s.lastUsedTime <- Time()
 					node.e.spawnTime = Time()
-					thread Aitdm_SpawnDropShip( node, team )
+					ToggleSpawnpointUse( node, true )
+					thread AiGameModes_SpawnDropShipModded( node, node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
 					wait 2.0
 					continue
 				}
@@ -217,7 +219,8 @@ void function Spawner_Threaded( int team )
 			entity node = points[ GetSpawnPointIndex( points, team ) ]
 			node.s.lastUsedTime <- Time()
 			node.e.spawnTime = Time()
-			thread AiGameModes_SpawnDropPodModded( node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
+			ToggleSpawnpointUse( node, true )
+			thread AiGameModes_SpawnDropPodModded( node, node.GetOrigin(), node.GetAngles(), team, ent, SquadHandler )
 			wait 2.0
 		}
 		
@@ -243,12 +246,6 @@ void function AttritionExtendedRecode_Handle( int team )
 		}
 		WaitFrame()
 	}
-}
-
-void function Aitdm_SpawnDropShip( entity node, int team )
-{
-	thread AiGameModes_SpawnDropShipModded( node.GetOrigin(), node.GetAngles(), team, 4, SquadHandler )
-	wait 20
 }
 
 
@@ -297,7 +294,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
             return false
     }
 
-    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) || ( "spawnTime" in spawnpoint.e && Time() - spawnpoint.e.spawnTime <= 10.0 )  )
+    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) || ( Time() > 10.0 && Time() - spawnpoint.e.spawnTime <= 10.0 ) )
         return false
 
     if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
@@ -314,6 +311,12 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
     }
 
     return !spawnpoint.IsVisibleToEnemies( team )
+}
+
+void function ToggleSpawnpointUse( entity spawnpoint, bool value )
+{
+    spawnpoint.s.inuse <- value
+    spawnpoint.e.spawnPointInUse = value
 }
 
 // tells infantry where to go
@@ -539,7 +542,7 @@ void function SetUpNPCWeapons( entity guy )
 	}
 }
 
-void function AiGameModes_SpawnDropShipModded( vector pos, vector rot, int team, int count, void functionref( array<entity> guys ) squadHandler = null )
+void function AiGameModes_SpawnDropShipModded( entity node, vector pos, vector rot, int team, int count, void functionref( array<entity> guys ) squadHandler = null )
 {  
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
 
@@ -566,10 +569,12 @@ void function AiGameModes_SpawnDropShipModded( vector pos, vector rot, int team,
 	
 	if ( squadHandler != null )
 		thread squadHandler( guys )
+	if ( IsValid( node ) )
+		ToggleSpawnpointUse( node, false )
 }
 
 
-void function AiGameModes_SpawnDropPodModded( vector pos, vector rot, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( array<entity> guys ) squadHandler = null, int flags = 0 )
+void function AiGameModes_SpawnDropPodModded( entity node, vector pos, vector rot, int team, string content /*( ͡° ͜ʖ ͡°)*/, void functionref( array<entity> guys ) squadHandler = null, int flags = 0 )
 {
 	entity pod = CreateDropPod( pos, <0,0,0> )
 	
@@ -598,10 +603,12 @@ void function AiGameModes_SpawnDropPodModded( vector pos, vector rot, int team, 
 	// start searching for enemies
 	if ( squadHandler != null )
 		thread squadHandler( guys )
+	if ( IsValid( node ) )
+		ToggleSpawnpointUse( node, false )
 }
 
 const float REAPER_WARPFALL_DELAY = 4.7 // same as fd does
-void function AiGameModes_SpawnReaperModded( vector pos, vector rot, int team, string aiSettings = "", void functionref( entity reaper ) reaperHandler = null )
+void function AiGameModes_SpawnReaperModded( entity node, vector pos, vector rot, int team, string aiSettings = "", void functionref( entity reaper ) reaperHandler = null )
 {
 	float reaperLandTime = REAPER_WARPFALL_DELAY + 1.2 // reaper takes ~1.2s to warpfall
 	thread HotDrop_Spawnpoint( pos, team, reaperLandTime, false, damagedef_reaper_fall )
@@ -609,6 +616,13 @@ void function AiGameModes_SpawnReaperModded( vector pos, vector rot, int team, s
 	wait REAPER_WARPFALL_DELAY
 	entity reaper = CreateSuperSpectre( team, pos, rot )
 	reaper.EndSignal( "OnDestroy" )
+	OnThreadEnd(
+		function () : ( node )
+		{
+			if ( IsValid( node ) )
+				ToggleSpawnpointUse( node, false )
+		}
+	)
 	// reaper highlight
 	Highlight_SetFriendlyHighlight( reaper, "sp_enemy_pilot" )
 	reaper.Highlight_SetParam( 1, 0, < 1,1,1 > )
