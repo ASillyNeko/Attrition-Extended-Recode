@@ -169,7 +169,9 @@ void function Spawner_Threaded( int team )
 			array< entity > points = SpawnPoints_GetTitan()
 			if ( reaperCount < GetCurrentPlaylistVarInt( "reaper_count", 2 ) )
 			{
-				entity node = points[ GetSpawnPointIndex( points, team ) ]
+				entity node = GetSpawnPoint( points, team )
+				if ( !IsValid( node ) )
+					return
 				node.s.lastUsedTime <- Time()
 				node.e.spawnTime = Time()
 				ToggleSpawnpointUse( node, true )
@@ -205,7 +207,9 @@ void function Spawner_Threaded( int team )
 			{
 				if ( RandomInt( points.len() ) )
 				{
-					entity node = points[ GetSpawnPointIndex( points, team ) ]
+					entity node = GetSpawnPoint( points, team )
+					if ( !IsValid( node ) )
+						return
 					node.s.lastUsedTime <- Time()
 					node.e.spawnTime = Time()
 					ToggleSpawnpointUse( node, true )
@@ -216,7 +220,9 @@ void function Spawner_Threaded( int team )
 			}
 			
 			points = SpawnPoints_GetTitan()
-			entity node = points[ GetSpawnPointIndex( points, team ) ]
+			entity node = GetSpawnPoint( points, team )
+			if ( !IsValid( node ) )
+				return
 			node.s.lastUsedTime <- Time()
 			node.e.spawnTime = Time()
 			ToggleSpawnpointUse( node, true )
@@ -252,32 +258,27 @@ void function AttritionExtendedRecode_Handle( int team )
 // Decides where to spawn ai
 // Each team has their "zone" where they and their ai spawns
 // These zones should swap based on which team is dominating where
-int function GetSpawnPointIndex( array< entity > points, int team )
+entity function GetSpawnPoint( array< entity > points, int team )
 {
 	entity zone = DecideSpawnZone_Generic( points, team )
 	
 	if ( IsValid( zone ) )
 		for ( int i = 0; i < points.len(); i++ )
 			if ( Distance2D( points[i].GetOrigin(), zone.GetOrigin() ) < 6000 && IsSpawnpointValid( points[i], team ) )
-				return i
+				return points[i]
 
 	array < entity > spawnpoints
 	foreach ( entity spawnpoint in points )
 		if ( IsSpawnpointValid( spawnpoint, team ) )
 			spawnpoints.append( spawnpoint )
 
-	entity point
 	if ( spawnpoints.len() )
 		if ( IsValid( zone ) )
-			point = GetClosest2D( spawnpoints, zone.GetOrigin() )
+			return GetClosest2D( spawnpoints, zone.GetOrigin() )
 		else
-			point = spawnpoints.getrandom()
-
-	for ( int i = 0; i < points.len(); i++ )
-		if ( points[i] == point )
-			return i
+			return spawnpoints.getrandom()
 	
-	return RandomInt( points.len() )
+	return null
 }
 
 bool function IsSpawnpointValid( entity spawnpoint, int team )
@@ -294,7 +295,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
             return false
     }
 
-    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) || ( Time() > 10.0 && Time() - spawnpoint.e.spawnTime <= 10.0 ) )
+    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) || ( spawnpoint.e.spawnTime != 0 && Time() - spawnpoint.e.spawnTime <= 10.0 ) || spawnpoint.e.spawnPointInUse )
         return false
 
     if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )

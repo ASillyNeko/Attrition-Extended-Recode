@@ -1624,9 +1624,11 @@ entity function GetSpawnpoint( int team )
     array<entity> betterspawns
     if ( !spawns.len() )
         return null
+
     foreach ( entity spawnpoint in spawns )
         if ( IsSpawnpointValid( spawnpoint, team ) )
             betterspawns.append( spawnpoint )
+
     if ( !betterspawns.len() )
         return null
     else
@@ -1647,7 +1649,7 @@ bool function IsSpawnpointValid( entity spawnpoint, int team )
             return false
     }
 
-    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) || ( Time() > 10.0 && Time() - spawnpoint.e.spawnTime <= 10.0 ) || spawnpoint.e.spawnPointInUse )
+    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) || ( spawnpoint.e.spawnTime != 0 && Time() - spawnpoint.e.spawnTime <= 10.0 ) || spawnpoint.e.spawnPointInUse )
         return false
 
     if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
