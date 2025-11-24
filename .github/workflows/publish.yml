@@ -48,7 +48,4 @@ jobs:
           wrap: mods/Nekos.Attrition.Extended.Recode
           #deps: "northstar-Northstar@1.9.3" # <------------- Uncomment this line to add dependencies to your mod, each sparated by a space
           repo: northstar.thunderstore.io
-          categories: |
-            mods 
-            server-side
-            language-en
+          categories: "mods server-side language-en"
