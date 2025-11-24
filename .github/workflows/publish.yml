@@ -37,7 +37,7 @@ jobs:
           # This should be modified if your github username is different than your team name on Thunderstore
           namespace: ASillyNeko
           # Name of the package
-          name: Attrition-Extended-Recode
+          name: Attrition_Extended_Recode
           # Package version to publish
           version: ${{ github.ref_name }}
           # Description of the mod
