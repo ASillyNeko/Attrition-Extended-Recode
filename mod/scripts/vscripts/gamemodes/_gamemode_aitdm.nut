@@ -134,8 +134,8 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 	AddTeamScore( attacker.GetTeam(), teamScore )
 	if ( attacker.IsPlayer() )
 	{
-	    attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, playerScore )
-	    attacker.SetPlayerNetInt("AT_bonusPoints", attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
+		attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, playerScore )
+		attacker.SetPlayerNetInt("AT_bonusPoints", attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE ) )
 	}
 }
 
@@ -143,7 +143,7 @@ void function HandleScoreEvent( entity victim, entity attacker, var damageInfo )
 // Spawner_Threaded is used to keep the match populated
 void function SpawnIntroBatch_Threaded( int team )
 {
-    thread AttritionExtendedRecode_Handle( team )
+	thread AttritionExtendedRecode_Handle( team )
 	thread Spawner_Threaded( team )
 }
 
@@ -171,7 +171,8 @@ void function Spawner_Threaded( int team )
 			{
 				entity node = GetSpawnPoint( points, team )
 				if ( !IsValid( node ) )
-					return
+					continue
+
 				node.s.lastUsedTime <- Time()
 				node.e.spawnTime = Time()
 				ToggleSpawnpointUse( node, true )
@@ -209,7 +210,8 @@ void function Spawner_Threaded( int team )
 				{
 					entity node = GetSpawnPoint( points, team )
 					if ( !IsValid( node ) )
-						return
+						continue
+
 					node.s.lastUsedTime <- Time()
 					node.e.spawnTime = Time()
 					ToggleSpawnpointUse( node, true )
@@ -222,7 +224,8 @@ void function Spawner_Threaded( int team )
 			points = SpawnPoints_GetTitan()
 			entity node = GetSpawnPoint( points, team )
 			if ( !IsValid( node ) )
-				return
+				continue
+
 			node.s.lastUsedTime <- Time()
 			node.e.spawnTime = Time()
 			ToggleSpawnpointUse( node, true )
@@ -241,13 +244,13 @@ void function AttritionExtendedRecode_Handle( int team )
 	{
 		if ( GameRules_GetTeamScore( team ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 0 ) && AttritionExtendedRecode_SpawnedPilotedTitans( team ) < GetCurrentPlaylistVarInt( "piloted_titan_count", 3 ) )
 		{
-		    AttritionExtendedRecode_SpawnPilotWithTitan( team )
+			AttritionExtendedRecode_SpawnPilotWithTitan( team )
 			wait RandomFloatRange( 0.5, 1 )
 		}
 
 		if ( GameRules_GetTeamScore( team ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 0 ) &&AttritionExtendedRecode_SpawnedUnPilotedTitans( team ) < GetCurrentPlaylistVarInt( "unpiloted_titan_count", 0 ) )
 		{
-		    AttritionExtendedRecode_SpawnTitan( team, false )
+			AttritionExtendedRecode_SpawnTitan( team, false )
 			wait RandomFloatRange( 0.5, 1 )
 		}
 		WaitFrame()
@@ -283,41 +286,41 @@ entity function GetSpawnPoint( array< entity > points, int team )
 
 bool function IsSpawnpointValid( entity spawnpoint, int team )
 {
-    if ( !spawnpoint.HasKey( "ignoreGamemode" ) || spawnpoint.HasKey( "ignoreGamemode" ) && spawnpoint.kv.ignoreGamemode == "0" )
-    {
-        if ( GetSpawnpointGamemodeOverride() != "" )
-        {
-            string gamemodeKey = "gamemode_" + GetSpawnpointGamemodeOverride()
-            if ( spawnpoint.HasKey( gamemodeKey ) && ( spawnpoint.kv[ gamemodeKey ] == "0" || spawnpoint.kv[ gamemodeKey ] == "" ) )
-                return false
-        }
-        else if ( GameModeRemove( spawnpoint ) )
-            return false
-    }
+	if ( !spawnpoint.HasKey( "ignoreGamemode" ) || spawnpoint.HasKey( "ignoreGamemode" ) && spawnpoint.kv.ignoreGamemode == "0" )
+	{
+		if ( GetSpawnpointGamemodeOverride() != "" )
+		{
+			string gamemodeKey = "gamemode_" + GetSpawnpointGamemodeOverride()
+			if ( spawnpoint.HasKey( gamemodeKey ) && ( spawnpoint.kv[ gamemodeKey ] == "0" || spawnpoint.kv[ gamemodeKey ] == "" ) )
+				return false
+		}
+		else if ( GameModeRemove( spawnpoint ) )
+			return false
+	}
 
-    if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) || ( spawnpoint.e.spawnTime != 0 && Time() - spawnpoint.e.spawnTime <= 10.0 ) || spawnpoint.e.spawnPointInUse )
-        return false
+	if ( spawnpoint.IsOccupied() || ( "inuse" in spawnpoint.s && spawnpoint.s.inuse ) || ( "lastUsedTime" in spawnpoint.s && Time() - spawnpoint.s.lastUsedTime <= 10.0 ) || ( spawnpoint.e.spawnTime != 0 && Time() - spawnpoint.e.spawnTime <= 10.0 ) || spawnpoint.e.spawnPointInUse )
+		return false
 
-    if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
-        return false
+	if ( SpawnPointInNoSpawnArea( spawnpoint.GetOrigin(), team ) )
+		return false
 
-    array< entity > enemyTitans = GetTitanArrayOfEnemies( team )
-    if ( GetConVarBool( "spawnpoint_avoid_npc_titan_sight" ) )
-    {
-        foreach ( titan in enemyTitans )
-        {
-            if ( IsAlive( titan ) && titan.IsNPC() && titan.CanSee( spawnpoint ) )
-                return false
-        }
-    }
+	array< entity > enemyTitans = GetTitanArrayOfEnemies( team )
+	if ( GetConVarBool( "spawnpoint_avoid_npc_titan_sight" ) )
+	{
+		foreach ( titan in enemyTitans )
+		{
+			if ( IsAlive( titan ) && titan.IsNPC() && titan.CanSee( spawnpoint ) )
+				return false
+		}
+	}
 
-    return !spawnpoint.IsVisibleToEnemies( team )
+	return !spawnpoint.IsVisibleToEnemies( team )
 }
 
 void function ToggleSpawnpointUse( entity spawnpoint, bool value )
 {
-    spawnpoint.s.inuse <- value
-    spawnpoint.e.spawnPointInUse = value
+	spawnpoint.s.inuse <- value
+	spawnpoint.e.spawnPointInUse = value
 }
 
 // tells infantry where to go
@@ -591,7 +594,7 @@ void function AiGameModes_SpawnDropPodModded( entity node, vector pos, vector ro
 		DispatchSpawn( npc )
 		SetSquad( npc, squadName )
 
-        SetUpNPCWeapons( npc )
+		SetUpNPCWeapons( npc )
 
 		npc.SetParent( pod, "ATTACH", true )
 		

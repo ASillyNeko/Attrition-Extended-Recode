@@ -119,7 +119,7 @@ npc_pilot_elite
 
 	// they won't do chase if non of these behavior set up
 	chaseStopDist					250 // vanilla uses 16. this should be higher, pilot melee is deadly
-    chaseStopDistHeavyArmor			800 // vanilla uses 250. this should be higher, pilots can't resist to titans.
+	chaseStopDistHeavyArmor			800 // vanilla uses 250. this should be higher, pilots can't resist to titans.
 
 	showFriendlyIcon				1
 	meleeable						1
