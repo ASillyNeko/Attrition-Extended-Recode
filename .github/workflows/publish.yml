@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Upload Thunderstore Package
-        uses: GreenTF/upload-thunderstore-package@v3.1
+        uses: GreenTF/upload-thunderstore-package@v4.3
         with:
           community: northstar
           # Name of the team to publish the mod under
@@ -48,4 +48,7 @@ jobs:
           wrap: mods/Nekos.Attrition.Extended.Recode
           #deps: "northstar-Northstar@1.9.3" # <------------- Uncomment this line to add dependencies to your mod, each sparated by a space
           repo: northstar.thunderstore.io
-          categories: "mods server-side language-en"
+          categories: |
+            mods 
+            server-side
+            language-en
