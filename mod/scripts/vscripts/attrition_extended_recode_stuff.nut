@@ -1423,16 +1423,20 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
 	entity spawnpoint = GetSpawnpoint( team )
 	if ( !IsValid( spawnpoint ) )
 		return
+
 	spawnpoint.s.lastUsedTime <- Time()
 	spawnpoint.e.spawnTime = Time()
 	ToggleSpawnpointUse( spawnpoint, true )
+
 	vector pos = spawnpoint.GetOrigin()
 	vector angles = spawnpoint.GetAngles()
 	entity pod = CreateDropPod( pos, angles )
 	entity poddoor = DropPodDoor( pod )
+
 	AttritionExtendedRecode_CustomTitanStruct CustomTitan = AttritionExtendedRecode_CustomTitanEmpty()
 	if ( RandomInt( 100 ) < int( GetCurrentPlaylistVarFloat( "ct_titan_replace_chance", 0.20 ) * 100 ) && file.CustomTitans.len() )
 		CustomTitan = clone file.CustomTitans.getrandom()
+
 	array<entity> npcs
 	for ( int i = 0; i < 1; i++ )
 	{
@@ -1465,16 +1469,20 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
 		file.spawnedpilotedtitans[ team ] <- file.spawnedpilotedtitans[ team ] + 1
 	else
 		file.spawnedpilotedtitans[ team ] <- 1
+
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, angles )
 
 	string squadName = MakeSquadName( team, UniqueString( "" ) )
 
 	foreach ( entity pilot in npcs )
 		pilot.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+
 	foreach ( entity pilot in npcs )
 		thread PilotMiniMap( pilot )
+
 	DropPodOpenDoorModded( pod, poddoor )
 	thread ActivateFireteamDropPodModded( pod, npcs, poddoor )
+
 	if ( IsValid( spawnpoint ) )
 		ToggleSpawnpointUse( spawnpoint, false )
 }
@@ -1489,9 +1497,11 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 	entity spawnpoint = GetSpawnpoint( team )
 	if ( !IsValid( spawnpoint ) )
 		return
+
 	spawnpoint.s.lastUsedTime <- Time()
 	spawnpoint.e.spawnTime = Time()
 	ToggleSpawnpointUse( spawnpoint, true )
+
 	vector origin = spawnpoint.GetOrigin()
 	vector angles = spawnpoint.GetAngles()
 	entity pilot = CreateEntity( "npc_pilot_elite" )
@@ -1516,11 +1526,14 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 		usedomeshieldwarpfall = true
 		NPCPrespawnWarpfallSequenceModded( titanSettings, origin, angles )
 	}
+
 	string setFile = GetRandomTitanSetFile( titanSettings )
 	entity titan
+
 	AttritionExtendedRecode_CustomTitanStruct CustomTitan = AttritionExtendedRecode_CustomTitanEmpty()
 	if ( RandomInt( 100 ) < int( GetCurrentPlaylistVarFloat( "ct_titan_replace_chance", 0.20 ) * 100 ) && file.CustomTitans.len() )
 		CustomTitan = clone file.CustomTitans.getrandom()
+
 	if ( ( !withpilot && CustomTitan.AllowedWithoutPilot ) || ( withpilot && CustomTitan.AllowedWithPilot ) )
 	{
 		titan = CreateNPCTitan( CustomTitan.TitanSetFile, team, origin, angles )
@@ -1531,6 +1544,7 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 		titan = CreateNPCTitan( setFile, team, origin, angles )
 		SetSpawnOption_AISettings( titan, titanSettings )
 	}
+
 	DispatchSpawn( titan )
 
 	file.isattritionextendedrecodeentity[ titan ] <- true
@@ -1561,12 +1575,14 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 		titan.SetSkin( 2 )
 		titan.SetCamo( randomtitancamo )
 	}
+
 	thread AutoTitanLoadout( titan, CustomTitan )
 	thread MonitorTitanCore( titan )
 	if ( team in file.spawnedunpilotedtitans )
 		file.spawnedunpilotedtitans[ team ] <- file.spawnedunpilotedtitans[ team ] + 1
 	else
 		file.spawnedunpilotedtitans[ team ] <- 1
+
 	thread TillDeath( titan, false )
 
 	SetStanceKneel( titan.GetTitanSoul() )
@@ -1579,6 +1595,7 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 	{
 		NPCTitanHotdrops( titan, true, "at_hotdrop_drop_2knee_turbo_upgraded" )
 	}
+
 	if ( IsValid( spawnpoint ) )
 		ToggleSpawnpointUse( spawnpoint, false )
 }
@@ -1621,18 +1638,18 @@ void function TillDeath( entity titan, bool withpilot )
 entity function GetSpawnpoint( int team )
 {
 	array<entity> spawns = SpawnPoints_GetTitan()
-	array<entity> betterspawns
+	array<entity> validspawns
 	if ( !spawns.len() )
 		return null
 
 	foreach ( entity spawnpoint in spawns )
 		if ( IsSpawnpointValid( spawnpoint, team ) )
-			betterspawns.append( spawnpoint )
+			validspawns.append( spawnpoint )
 
-	if ( !betterspawns.len() )
+	if ( !validspawns.len() )
 		return null
 	else
-		return betterspawns.getrandom()
+		return validspawns.getrandom()
 }
 
 bool function IsSpawnpointValid( entity spawnpoint, int team )

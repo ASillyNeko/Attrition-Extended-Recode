@@ -1,7 +1,7 @@
 {
 	"Name": "Neko's Attrition Extended Recode",
 	"Description": "Attrition Extended without crashes.",
-	"Version": "1.2.2",
+	"Version": "1.2.3",
 	"LoadPriority": 20,
 	"Dependencies": {
 		"AIRBORNE_EXECUTIONS_THING": "Airborne Executions"
