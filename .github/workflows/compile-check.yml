@@ -6,7 +6,7 @@ jobs:
   compile:
     runs-on: windows-latest
     env:
-      NS_MOD_DIR: NorthstarMod # Change this to your mod directory example NorthstarMod/Nekos.Attrition.Extended.Recode or NorthstarMod if you use GreenTF thunderstore upload
+      NS_MOD_DIR: NorthstarMod # Change this to your mod directory example NorthstarMod\Nekos.Attrition.Extended.Recode or NorthstarMod if you use GreenTF thunderstore upload
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
