@@ -25,16 +25,11 @@ jobs:
         run: |
           xcopy %NS_MOD_DIR% mods\%NS_MOD_DIR% /E /I /Y
 
-      - name: Copy Natives JSON
-        shell: cmd
-        run: |
-          xcopy %NS_MOD_DIR%\.github\natives.json mods\.github\natives.json /E /I /Y
-
       - name: Compile Scripts (Experimental)
         uses: ASpoonPlaysGames/squirrel-re-compiler@v3
         with:
           mods-directory: "${{ github.workspace }}/mods"
-          native-json: "${{ github.workspace }}/mods/.github/natives.json"
+          native-json: "${{ github.workspace }}/NorthstarMod/.github/natives.json"
 
       - name: Remove Mods Folder
         shell: cmd
@@ -53,13 +48,8 @@ jobs:
         run: |
           xcopy %NS_MOD_DIR% mods\%NS_MOD_DIR% /E /I /Y
 
-      - name: Copy Natives JSON
-        shell: cmd
-        run: |
-          xcopy %NS_MOD_DIR%\.github\natives.json mods\.github\natives.json /E /I /Y
-
       - name: Compile Scripts (Main)
         uses: ASpoonPlaysGames/squirrel-re-compiler@v3
         with:
           mods-directory: "${{ github.workspace }}/mods"
-          native-json: "${{ github.workspace }}/mods/.github/natives.json"
+          native-json: "${{ github.workspace }}/NorthstarMod/.github/natives.json"
