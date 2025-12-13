@@ -6,7 +6,7 @@ jobs:
   compile:
     runs-on: windows-latest
     env:
-      NS_MOD_DIR: "" # Change this to your mod directory example Nekos.Attrition.Extended.Recode or leave it empty if you use GreenTF thunderstore upload
+      NS_MOD_DIR: "" # Change this to your mod directory example mods\\Nekos.Attrition.Extended.Recode or leave it empty if you use GreenTF thunderstore upload
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
