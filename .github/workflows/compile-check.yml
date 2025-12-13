@@ -6,7 +6,7 @@ jobs:
   compile:
     runs-on: windows-latest
     env:
-      NS_MOD_DIR: NorthstarMod # Change this to your mod directory example NorthstarMod\Nekos.Attrition.Extended.Recode or NorthstarMod if you use GreenTF thunderstore upload
+      NS_MOD_DIR: "" # Change this to your mod directory example Nekos.Attrition.Extended.Recode or leave it empty if you use GreenTF thunderstore upload
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
       - name: Copy Northstar Mod Into Mods
         shell: cmd
         run: |
-          xcopy %NS_MOD_DIR% mods\%NS_MOD_DIR% /E /I /Y
+          xcopy NorthstarMod\%NS_MOD_DIR% mods\NorthstarMod /E /I /Y
 
       - name: Compile Scripts (Experimental)
         uses: ASpoonPlaysGames/squirrel-re-compiler@v3
@@ -46,7 +46,7 @@ jobs:
       - name: Copy Northstar Mod Into Mods
         shell: cmd
         run: |
-          xcopy %NS_MOD_DIR% mods\%NS_MOD_DIR% /E /I /Y
+          xcopy NorthstarMod\%NS_MOD_DIR% mods\NorthstarMod /E /I /Y
 
       - name: Compile Scripts (Main)
         uses: ASpoonPlaysGames/squirrel-re-compiler@v3
