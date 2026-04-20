@@ -42,25 +42,25 @@ global struct AttritionExtendedRecode_CustomTitanStruct
 
 struct
 {
-	table< entity, bool > autoeject
+	table<entity, bool> autoeject
 
-	table< entity, array<string> > weapons
-	table< entity, asset > model
-	table< entity, string > grenade
-	table< entity, bool > pilotedtitan
+	table<entity, array<string> > weapons
+	table<entity, asset> model
+	table<entity, string> grenade
+	table<entity, bool> pilotedtitan
 
-	table< entity, int > smokecount
+	table<entity, int> smokecount
 
-	table< entity, bool > titanstanding
-	table< entity, bool > titanisbeingembarked
+	table<entity, bool> titanstanding
+	table<entity, bool> titanisbeingembarked
 
-	table< int, array<entity> > spawnedpilotedtitans
-	table< int, array<entity> > spawnedunpilotedtitans
+	table<int, array<entity> > spawnedpilotedtitans
+	table<int, array<entity> > spawnedunpilotedtitans
 
-	table< entity, bool > isattritionextendedrecodeentity
+	table<entity, bool> isattritionextendedrecodeentity
 
 	array<AttritionExtendedRecode_CustomTitanStruct> CustomTitans
-	table< entity, int > CustomTitanUID
+	table<entity, int> CustomTitanUID
 
 	array<string> pilotweapons = [
 		"mp_weapon_rspn101_og",
@@ -77,10 +77,7 @@ struct
 		"mp_weapon_hemlok_smg"
 	]
 
-	array<string> pilotantititanweapons = [
-		"mp_weapon_rocket_launcher",
-		"mp_weapon_defender"
-	]
+	array<string> pilotantititanweapons = [ "mp_weapon_rocket_launcher", "mp_weapon_defender" ]
 
 	array<asset> pilotmodels = [
 		$"models/humans/pilots/pilot_medium_geist_m.mdl",
@@ -129,7 +126,7 @@ void function OnPlaying()
 	if ( GetAINScriptVersion() == AIN_REV && GetNodeCount() )
 	{
 		thread SpawnIntroBatch( TEAM_IMC )
-		delaythread ( 0.0001 ) SpawnIntroBatch( TEAM_MILITIA )
+		delaythread( 0.0001 ) SpawnIntroBatch( TEAM_MILITIA )
 	}
 }
 
@@ -138,10 +135,17 @@ void function SpawnIntroBatch( int team )
 	int spawnedpiloted = 0
 	int spawnedunpiloted = 0
 
-	while ( GameRules_GetTeamScore( GetOtherTeam( team ) ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) && spawnedpiloted < GetCurrentPlaylistVarInt( "piloted_titan_count", 3 )
-	|| GameRules_GetTeamScore( GetOtherTeam( team ) ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) && spawnedunpiloted < GetCurrentPlaylistVarInt( "unpiloted_titan_count", 0 ) )
+	while (
+		GameRules_GetTeamScore( GetOtherTeam( team ) ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) &&
+		spawnedpiloted < GetCurrentPlaylistVarInt( "piloted_titan_count", 3 ) ||
+		GameRules_GetTeamScore( GetOtherTeam( team ) ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) &&
+			spawnedunpiloted < GetCurrentPlaylistVarInt( "unpiloted_titan_count", 0 )
+	)
 	{
-		if ( GameRules_GetTeamScore( GetOtherTeam( team ) ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) && spawnedpiloted < GetCurrentPlaylistVarInt( "piloted_titan_count", 3 ) )
+		if (
+			GameRules_GetTeamScore( GetOtherTeam( team ) ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) &&
+			spawnedpiloted < GetCurrentPlaylistVarInt( "piloted_titan_count", 3 )
+		)
 		{
 			AttritionExtendedRecode_SpawnPilotWithTitan( team, true )
 
@@ -150,7 +154,10 @@ void function SpawnIntroBatch( int team )
 			wait RandomFloatRange( 0.5, 1 )
 		}
 
-		if ( GameRules_GetTeamScore( GetOtherTeam( team ) ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) && spawnedunpiloted < GetCurrentPlaylistVarInt( "unpiloted_titan_count", 0 ) )
+		if (
+			GameRules_GetTeamScore( GetOtherTeam( team ) ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) &&
+			spawnedunpiloted < GetCurrentPlaylistVarInt( "unpiloted_titan_count", 0 )
+		)
 		{
 			AttritionExtendedRecode_SpawnTitan( team, false, true )
 
@@ -175,7 +182,10 @@ void function Spawner( int team )
 {
 	while ( IsAutoPopulateEnabled( team ) )
 	{
-		if ( GameRules_GetTeamScore( GetOtherTeam( team ) ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) && AttritionExtendedRecode_SpawnedPilotedTitans( team ) < GetCurrentPlaylistVarInt( "piloted_titan_count", 3 ) )
+		if (
+			GameRules_GetTeamScore( GetOtherTeam( team ) ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) &&
+			AttritionExtendedRecode_SpawnedPilotedTitans( team ) < GetCurrentPlaylistVarInt( "piloted_titan_count", 3 )
+		)
 		{
 			AttritionExtendedRecode_SpawnPilotWithTitan( team )
 
@@ -185,7 +195,10 @@ void function Spawner( int team )
 				wait WARPFALL_SOUND_DELAY + 2.5 + WARPFALL_FX_DELAY
 		}
 
-		if ( GameRules_GetTeamScore( GetOtherTeam( team ) ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) && AttritionExtendedRecode_SpawnedUnPilotedTitans( team ) < GetCurrentPlaylistVarInt( "unpiloted_titan_count", 0 ) )
+		if (
+			GameRules_GetTeamScore( GetOtherTeam( team ) ) >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) &&
+			AttritionExtendedRecode_SpawnedUnPilotedTitans( team ) < GetCurrentPlaylistVarInt( "unpiloted_titan_count", 0 )
+		)
 		{
 			AttritionExtendedRecode_SpawnTitan( team )
 
@@ -307,9 +320,10 @@ void function PilotTitanExecution_thread( entity ent, var damageInfo )
 
 	entity soul = ent.GetTitanSoul()
 
-	if ( attacker.IsNPC() && attacker.IsTitan() && IsValid( soul ) && ( damageType & DF_MELEE )
-		&& attacker in file.pilotedtitan && file.pilotedtitan[ attacker ] && CodeCallback_IsValidMeleeExecutionTarget( attacker, ent )
-		&& GetDoomedState( ent ) && !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) && !ent.IsPhaseShifted() && CanSurviveDamage( ent, damageInfo )
+	if (
+		attacker.IsNPC() && attacker.IsTitan() && IsValid( soul ) && ( damageType & DF_MELEE ) && attacker in file.pilotedtitan && file.pilotedtitan[ attacker ] &&
+		CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && GetDoomedState( ent ) && !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) &&
+		!ent.IsPhaseShifted() && CanSurviveDamage( ent, damageInfo )
 	)
 	{
 		PilotTitanExecution_DamageEnemy( ent, damageInfo )
@@ -365,8 +379,9 @@ void function PilotExecution_thread( entity ent, var damageInfo )
 	if ( !IsAlive( ent ) || !attacker || ent.GetTeam() == attacker.GetTeam() || attacker == ent || ent.IsTitan() || ent.IsInvulnerable() )
 		return
 
-	if ( attacker.IsNPC() && Is_AttritionExtendedRecode_Entity( attacker ) && ( damageType & DF_MELEE ) && CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && !ent.Anim_IsActive()
-		&& !( ( ent.IsPlayer() && PlayerCanSee( ent, attacker, true, 75 ) ) || ( ent.IsNPC() && ent.CanSee( attacker ) ) )
+	if (
+		attacker.IsNPC() && Is_AttritionExtendedRecode_Entity( attacker ) && ( damageType & DF_MELEE ) && CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) &&
+		!ent.Anim_IsActive() && !( ( ent.IsPlayer() && PlayerCanSee( ent, attacker, true, 75 ) ) || ( ent.IsNPC() && ent.CanSee( attacker ) ) )
 	)
 	{
 		DamageInfo_SetDamage( damageInfo, 0 )
@@ -428,7 +443,10 @@ void function PilotTitanAutoOrDeathEjectHandle( entity titan, var damageInfo )
 
 	entity soul = titan.GetTitanSoul()
 
-	if ( !IsValid( soul ) || soul.IsEjecting() || !( titan in file.pilotedtitan && file.pilotedtitan[ titan ] && titan in file.autoeject && file.autoeject[ titan ] && GetDoomedState( titan ) ) )
+	if (
+		!IsValid( soul ) || soul.IsEjecting() ||
+		!( titan in file.pilotedtitan && file.pilotedtitan[ titan ] && titan in file.autoeject && file.autoeject[ titan ] && GetDoomedState( titan ) )
+	)
 		return
 
 	thread TitanEjectPlayerForNPCs( titan, true )
@@ -640,10 +658,10 @@ void function OnFlagChanged( entity npc, array<int> flags, bool disable = false,
 		}
 
 		foreach ( int flag in flags )
-			if ( !disable && !npc.GetNPCFlag( flag )  )
+			if ( !disable && !npc.GetNPCFlag( flag ) )
 				npc.EnableNPCFlag( flag )
 			else if ( disable && npc.GetNPCFlag( flag ) )
-					npc.DisableNPCFlag( flag )
+				npc.DisableNPCFlag( flag )
 
 		WaitFrame()
 	}
@@ -706,9 +724,8 @@ void function pilotminimaponpilotdeath( entity npc, entity pilotminimap )
 	npc.EndSignal( "OnDestroy" )
 	npc.EndSignal( "OnDeath" )
 
-	OnThreadEnd
-	(
-		function () : ( pilotminimap )
+	OnThreadEnd(
+		function() : ( pilotminimap )
 		{
 			if ( IsValid( pilotminimap ) )
 				pilotminimap.Destroy()
@@ -761,7 +778,7 @@ void function OnNPCPilotEnemyChange( entity guy )
 		return
 
 	string activeWeaponName = activeWeapon.GetWeaponClassName()
-	bool antiTitanActive = activeWeapon != weapons[0] && !activeWeapon.GetWeaponSettingBool( eWeaponVar.titanarmor_critical_hit_required )
+	bool antiTitanActive = activeWeapon != weapons[ 0 ] && !activeWeapon.GetWeaponSettingBool( eWeaponVar.titanarmor_critical_hit_required )
 	bool isHeavyArmorTarget = enemy.GetArmorType() == ARMOR_TYPE_HEAVY
 	string weaponToChange = ""
 
@@ -777,7 +794,7 @@ void function OnNPCPilotEnemyChange( entity guy )
 			if ( activeWeaponName == className )
 				continue
 
-			bool isMainWeapon = weapon == weapons[0]
+			bool isMainWeapon = weapon == weapons[ 0 ]
 			bool isAntiTitan = !weapon.GetWeaponSettingBool( eWeaponVar.titanarmor_critical_hit_required )
 
 			if ( isAntiTitan && !isMainWeapon )
@@ -796,7 +813,7 @@ void function OnNPCPilotEnemyChange( entity guy )
 			if ( activeWeaponName == className )
 				continue
 
-			bool isMainWeapon = weapon == weapons[0]
+			bool isMainWeapon = weapon == weapons[ 0 ]
 			bool isAntiTitan = !weapon.GetWeaponSettingBool( eWeaponVar.titanarmor_critical_hit_required )
 
 			if ( isMainWeapon || !isAntiTitan )
@@ -903,7 +920,6 @@ void function MonitorTitanCore( entity npc )
 	}
 }
 
-
 void function WaitTillTitanCoreCharge( entity titan )
 {
 	titan.EndSignal( "OnDestroy" )
@@ -920,7 +936,6 @@ void function WaitTillTitanCoreCharge( entity titan )
 	while ( TitanCoreInUse( titan ) || SoulTitanCore_GetNextAvailableTime( soul ) != 1.0 )
 		WaitFrame()
 }
-
 
 void function MonarchUpgrades( entity titan )
 {
@@ -940,7 +955,6 @@ void function MonarchUpgrades( entity titan )
 	GivePassive( soul, ePassives.PAS_VANGUARD_CORE8 )
 }
 
-
 void function MonarchUpgrade( entity weapon )
 {
 	entity owner = weapon.GetWeaponOwner()
@@ -955,7 +969,7 @@ void function MonarchUpgrade( entity weapon )
 
 			if ( weapons.len() )
 			{
-				entity primaryWeapon = weapons[0]
+				entity primaryWeapon = weapons[ 0 ]
 
 				if ( IsValid( primaryWeapon ) )
 				{
@@ -984,7 +998,7 @@ void function MonarchUpgrade( entity weapon )
 
 			if ( weapons.len() )
 			{
-				entity primaryWeapon = weapons[0]
+				entity primaryWeapon = weapons[ 0 ]
 
 				if ( IsValid( primaryWeapon ) )
 				{
@@ -1028,7 +1042,6 @@ void function MonarchUpgrade( entity weapon )
 	soul.SetTitanSoulNetInt( "upgradeCount", currentUpgradeCount + 1 )
 }
 
-
 void function PilotInTitanSet( entity titan )
 {
 	if ( IsValid( titan ) )
@@ -1059,27 +1072,33 @@ void function PilotInTitanSet( entity titan )
 					titan.SetAISettings( "npc_titan_atlas_stickybomb" )
 					titan.SetBehaviorSelector( "behavior_titan_long_range" )
 					break
+
 				case "scorch":
 					titan.SetAISettings( "npc_titan_ogre_meteor" )
 					titan.SetBehaviorSelector( "behavior_titan_ogre_meteor" )
 					break
+
 				case "northstar":
 					titan.SetAISettings( "npc_titan_stryder_sniper" )
 					titan.SetBehaviorSelector( "behavior_titan_sniper" )
 					break
+
 				case "ronin":
 					titan.SetAISettings( "npc_titan_stryder_leadwall" )
 					titan.SetBehaviorSelector( "behavior_titan_shotgun" )
 					break
+
 				case "tone":
 					titan.SetAISettings( "npc_titan_atlas_tracker" )
 					titan.SetBehaviorSelector( "behavior_titan_long_range" )
 					break
+
 				case "legion":
 					titan.SetAISettings( "npc_titan_ogre_minigun" )
 					titan.SetBehaviorSelector( "behavior_titan_ogre_minigun" )
 					titan.SetNPCMoveSpeedScale( 1.25 )
 					break
+
 				case "vanguard":
 					titan.SetAISettings( "npc_titan_atlas_vanguard" )
 					titan.SetBehaviorSelector( "behavior_titan_long_range" )
@@ -1123,22 +1142,28 @@ void function PilotNotInTitanSet( entity titan, bool firsttime = false )
 					case "ion":
 						titan.SetAISettings( "npc_titan_auto_atlas_stickybomb" )
 						break
+
 					case "scorch":
 						titan.SetAISettings( "npc_titan_auto_ogre_meteor" )
 						break
+
 					case "northstar":
 						titan.SetAISettings( "npc_titan_auto_stryder_sniper" )
 						break
+
 					case "ronin":
 						titan.SetAISettings( "npc_titan_auto_stryder_leadwall" )
 						break
+
 					case "tone":
 						titan.SetAISettings( "npc_titan_auto_atlas_tracker" )
 						break
+
 					case "legion":
 						titan.SetAISettings( "npc_titan_auto_ogre_minigun" )
 						titan.SetNPCMoveSpeedScale( 1.0 )
 						break
+
 					case "vanguard":
 						titan.SetAISettings( "npc_titan_auto_atlas_vanguard" )
 						break
@@ -1165,8 +1190,7 @@ void function NPCFollowsNPCModded_thread( entity npc, entity leader )
 	npc.EndSignal( "OnDeath" )
 	npc.EndSignal( "OnDestroy" )
 
-	OnThreadEnd
-	(
+	OnThreadEnd(
 		function() : ( npc )
 		{
 			if ( IsValid( npc ) && IsAlive( npc ) )
@@ -1215,7 +1239,7 @@ void function EmbarkedNPCTitanRodeoCounter_Threaded( entity titan )
 		entity rodeoPilot = GetRodeoPilot( titan )
 		float rodeoHitTime = soul.GetLastRodeoHitTime()
 
-		if ( rodeoHitTime  && !lastTickRodeoHitTime )
+		if ( rodeoHitTime && !lastTickRodeoHitTime )
 		{
 			beingRodeoedTime = rodeoHitTime
 		}
@@ -1308,7 +1332,7 @@ void function TitanSmokescreen( entity ent )
 	smokescreen.damageDelay = 1.0
 	smokescreen.blockLOS = false
 
-	vector eyeAngles = <0.0, ent.EyeAngles().y, 0.0>
+	vector eyeAngles = < 0.0, ent.EyeAngles().y, 0.0 >
 	smokescreen.angles = eyeAngles
 
 	vector forward = AnglesToForward( eyeAngles )
@@ -1325,11 +1349,8 @@ void function TitanSmokescreen( entity ent )
 
 	smokescreen.origin = basePos
 
-	smokescreen.fxOffsets = [ < -fxOffset, 0.0, 20.0>,
-							  <0.0, fxOffset, 20.0>,
-							  <0.0, -fxOffset, 20.0>,
-							  <0.0, 0.0, fxHeightOffset>,
-							  < -fxOffset, 0.0, fxHeightOffset> ]
+	smokescreen.fxOffsets =
+		[ < -fxOffset, 0.0, 20.0 >, < 0.0, fxOffset, 20.0 >, < 0.0, -fxOffset, 20.0 >, < 0.0, 0.0, fxHeightOffset >, < -fxOffset, 0.0, fxHeightOffset > ]
 
 	Smokescreen( smokescreen )
 }
@@ -1358,7 +1379,7 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team, bool intros
 
 	AttritionExtendedRecode_CustomTitanStruct CustomTitan = AttritionExtendedRecode_CustomTitanEmpty()
 
-	if ( RandomInt( 100 ) < int( GetCurrentPlaylistVarFloat( "ct_titan_replace_chance", 0.20 ) * 100 ) && file.CustomTitans.len() )
+	if ( RandomInt( 100 ) < int( GetCurrentPlaylistVarFloat( "ct_titan_replace_chance", 0.2 ) * 100 ) && file.CustomTitans.len() )
 		CustomTitan = clone file.CustomTitans.getrandom()
 
 	entity pilot = CreateEntity( "npc_pilot_elite" )
@@ -1461,12 +1482,15 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 	array<string> settingsArray = GetAllowedTitanAISettings()
 	bool usedomeshieldwarpfall = false
 
-	settingsArray.extend( [ "npc_titan_auto_atlas_ion_prime",
-	"npc_titan_auto_ogre_scorch_prime",
-	"npc_titan_auto_stryder_northstar_prime",
-	"npc_titan_auto_stryder_ronin_prime",
-	"npc_titan_auto_atlas_tone_prime",
-	"npc_titan_auto_ogre_legion_prime" ]
+	settingsArray.extend(
+		[
+			"npc_titan_auto_atlas_ion_prime",
+			"npc_titan_auto_ogre_scorch_prime",
+			"npc_titan_auto_stryder_northstar_prime",
+			"npc_titan_auto_stryder_ronin_prime",
+			"npc_titan_auto_atlas_tone_prime",
+			"npc_titan_auto_ogre_legion_prime"
+		]
 	)
 
 	string titanSettings = settingsArray.getrandom()
@@ -1483,7 +1507,7 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 
 	AttritionExtendedRecode_CustomTitanStruct CustomTitan = AttritionExtendedRecode_CustomTitanEmpty()
 
-	if ( RandomInt( 100 ) < int( GetCurrentPlaylistVarFloat( "ct_titan_replace_chance", 0.20 ) * 100 ) && file.CustomTitans.len() )
+	if ( RandomInt( 100 ) < int( GetCurrentPlaylistVarFloat( "ct_titan_replace_chance", 0.2 ) * 100 ) && file.CustomTitans.len() )
 		CustomTitan = clone file.CustomTitans.getrandom()
 
 	if ( ( !withpilot && CustomTitan.AllowedWithoutPilot ) || ( withpilot && CustomTitan.AllowedWithPilot ) )
@@ -1521,7 +1545,9 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 		}
 	}
 
-	if ( ( CustomTitan.Camo != -1 && CustomTitan.Skin != -1 ) && ( ( !withpilot && CustomTitan.AllowedWithoutPilot ) || ( withpilot && CustomTitan.AllowedWithPilot ) ) )
+	if (
+		( CustomTitan.Camo != -1 && CustomTitan.Skin != -1 ) && ( ( !withpilot && CustomTitan.AllowedWithoutPilot ) || ( withpilot && CustomTitan.AllowedWithPilot ) )
+	)
 	{
 		titan.SetSkin( CustomTitan.Skin )
 		titan.SetCamo( CustomTitan.Camo )
@@ -1663,15 +1689,14 @@ void function GuyHangsInPod( entity guy, entity pod, entity poddoor )
 	guy.EndSignal( "OnDeath" )
 	guy.EndSignal( "OnDestroy" )
 
-	OnThreadEnd
-	(
-		function () : ( pod, poddoor )
+	OnThreadEnd(
+		function() : ( pod, poddoor )
 		{
 			thread DestroyPod( pod, poddoor )
 		}
 	)
 
-	string exitAnim = expect string ( GetAnim( guy, "drop_pod_exit_anim" ) )
+	string exitAnim = expect string( GetAnim( guy, "drop_pod_exit_anim" ) )
 	bool exitAnimExists = guy.LookupSequence( exitAnim ) != -1
 
 	guy.SetParent( pod, "ATTACH", false )
@@ -1747,7 +1772,7 @@ void function NPCPrespawnWarpfallSequenceModded( string aiSettings, vector spawn
 
 	EmitSoundAtPosition( TEAM_UNASSIGNED, spawnOrigin, "Titan_3P_Warpfall_Start" )
 
-	PlayFX( TURBO_WARP_FX, warpAttach.position + Vector(0,0,-104), warpAttach.angle )
+	PlayFX( TURBO_WARP_FX, warpAttach.position + Vector( 0, 0, -104 ), warpAttach.angle )
 
 	wait WARPFALL_FX_DELAY
 }
@@ -1760,12 +1785,15 @@ entity function AttritionExtendedRecode_NpcPilotCallsInTitan( entity pilot, vect
 	array<string> settingsArray = GetAllowedTitanAISettings()
 	bool usedomeshieldwarpfall = false
 
-	settingsArray.extend( [ "npc_titan_auto_atlas_ion_prime",
-	"npc_titan_auto_ogre_scorch_prime",
-	"npc_titan_auto_stryder_northstar_prime",
-	"npc_titan_auto_stryder_ronin_prime",
-	"npc_titan_auto_atlas_tone_prime",
-	"npc_titan_auto_ogre_legion_prime" ]
+	settingsArray.extend(
+		[
+			"npc_titan_auto_atlas_ion_prime",
+			"npc_titan_auto_ogre_scorch_prime",
+			"npc_titan_auto_stryder_northstar_prime",
+			"npc_titan_auto_stryder_ronin_prime",
+			"npc_titan_auto_atlas_tone_prime",
+			"npc_titan_auto_ogre_legion_prime"
+		]
 	)
 
 	string titanSettings = settingsArray.getrandom()
@@ -1905,21 +1933,27 @@ void function AttritionExtendedRecode_NpcPilotBecomesTitan( entity pilot, entity
 			case "ion":
 				titan.SetTitle( "Ion" )
 				break
+
 			case "scorch":
 				titan.SetTitle( "Scorch" )
 				break
+
 			case "northstar":
 				titan.SetTitle( "Northstar" )
 				break
+
 			case "ronin":
 				titan.SetTitle( "Ronin" )
 				break
+
 			case "tone":
 				titan.SetTitle( "Tone" )
 				break
+
 			case "legion":
 				titan.SetTitle( "Legion" )
 				break
+
 			case "vanguard":
 				titan.SetTitle( "Monarch" )
 				break
@@ -2271,9 +2305,8 @@ void function TitanStandAfterDropIn( entity titan, entity pilot )
 	titan.EndSignal( "OnDeath" )
 	titan.WaitSignal( "TitanHotDropComplete" )
 
-	OnThreadEnd
-	(
-		function () : ( titan, pilot )
+	OnThreadEnd(
+		function() : ( titan, pilot )
 		{
 			if ( IsValid( titan ) && IsAlive( titan ) && !AttritionExtendedRecode_TitanHasNpcPilot( titan ) && ( !IsValid( pilot ) || !IsAlive( pilot ) ) )
 				titan.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 500 )
@@ -2308,9 +2341,8 @@ void function AttritionExtendedRecode_NpcPilotEmbarksTitan( entity pilot, entity
 	pilot.EndSignal( "OnDestroy" )
 	pilot.EndSignal( "OnDeath" )
 
-	OnThreadEnd
-	(
-		function () : ( pilot, titan )
+	OnThreadEnd(
+		function() : ( pilot, titan )
 		{
 			if ( IsValid( pilot ) && IsAlive( pilot ) )
 				pilot.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 500 )
@@ -2325,21 +2357,21 @@ void function AttritionExtendedRecode_NpcPilotEmbarksTitan( entity pilot, entity
 	while ( !FindBestEmbark( pilot, titan ) )
 		WaitFrame()
 
-	table embarkSet = expect table ( FindBestEmbark( pilot, titan ) )
+	table embarkSet = expect table( FindBestEmbark( pilot, titan ) )
 
 	FirstPersonSequenceStruct sequence
 	sequence.attachment = "hijack"
-	sequence.useAnimatedRefAttachment = expect bool ( embarkSet.action.useAnimatedRefAttachment )
+	sequence.useAnimatedRefAttachment = expect bool( embarkSet.action.useAnimatedRefAttachment )
 	sequence.blendTime = 0.5
 	sequence.thirdPersonAnim = GetAnimFromAlias( titanSubClass, embarkSet.animSet.thirdPersonKneelingAlias )
 
-	string titanAnim = expect string ( embarkSet.animSet.titanKneelingAnim )
+	string titanAnim = expect string( embarkSet.animSet.titanKneelingAnim )
 
 	if ( titan.GetTitanSoul().GetStance() > STANCE_STANDING )
 	{
 		sequence.thirdPersonAnim = GetAnimFromAlias( titanSubClass, embarkSet.animSet.thirdPersonStandingAlias )
 
-		titanAnim = expect string ( embarkSet.animSet.titanStandingAnim )
+		titanAnim = expect string( embarkSet.animSet.titanStandingAnim )
 	}
 
 	if ( IsCloaked( pilot ) )
@@ -2384,9 +2416,8 @@ void function NPCPilotEjectingAnimation( entity pilot )
 	pilot.Anim_ScriptedPlayActivityByName( "ACT_FALL", true, 0.2 )
 	pilot.SetNPCPriorityOverride( 10 )
 
-	OnThreadEnd
-	(
-		function(): ( pilot )
+	OnThreadEnd(
+		function() : ( pilot )
 		{
 			if ( IsValid( pilot ) )
 			{
@@ -2421,9 +2452,8 @@ void function ClearEjectInvulnerability( entity player )
 
 	player.EndSignal( "OnDeath" )
 
-	OnThreadEnd
-	(
-		function () : ( player )
+	OnThreadEnd(
+		function() : ( player )
 		{
 			if ( IsValid( player ) )
 				player.ClearInvulnerable()
@@ -2438,7 +2468,7 @@ void function TitanNonSolidTemp( entity titan )
 	if ( !EntityInSolid( titan ) )
 		return
 
-	string collisionGroup = expect string ( titan.kv.CollisionGroup )
+	string collisionGroup = expect string( titan.kv.CollisionGroup )
 
 	titan.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
 
@@ -2513,17 +2543,17 @@ void function NuclearCoreExplosionChainReaction( vector origin, table e )
 	float waitPerExplosion = time / explosions
 
 	ClearNuclearBlueSunEffect( e )
-	PlayFX( TITAN_NUCLEAR_CORE_FX_3P, origin + Vector( 0, 0, -100 ), Vector(0,RandomInt(360),0) )
+	PlayFX( TITAN_NUCLEAR_CORE_FX_3P, origin + Vector( 0, 0, -100 ), Vector( 0, RandomInt( 360 ), 0 ) )
 
 	if ( !IsNPC )
 		explosions += 1
 
 	int outerRadius
 
-	float baseNormalDamage 		= normalDamage
-	float baseHeavyArmorDamage 	= heavyArmorDamage
-	int baseInnerRadius 		= innerRadius
-	int baseOuterRadius 		= outerRadius
+	float baseNormalDamage = normalDamage
+	float baseHeavyArmorDamage = heavyArmorDamage
+	int baseInnerRadius = innerRadius
+	int baseOuterRadius = outerRadius
 
 	entity inflictor = CreateEntity( "script_ref" )
 
@@ -2532,8 +2562,7 @@ void function NuclearCoreExplosionChainReaction( vector origin, table e )
 
 	DispatchSpawn( inflictor )
 
-	OnThreadEnd
-	(
+	OnThreadEnd(
 		function() : ( inflictor )
 		{
 			if ( IsValid( inflictor ) )
@@ -2543,10 +2572,10 @@ void function NuclearCoreExplosionChainReaction( vector origin, table e )
 
 	for ( int i = 0; i < explosions; i++ )
 	{
-		float normalDamage 		= baseNormalDamage
-		float heavyArmorDamage 	= baseHeavyArmorDamage
-		int innerRadius 		= baseInnerRadius
-		int outerRadius 		= baseOuterRadius
+		float normalDamage = baseNormalDamage
+		float heavyArmorDamage = baseHeavyArmorDamage
+		int innerRadius = baseInnerRadius
+		int outerRadius = baseOuterRadius
 
 		if ( !i && !IsNPC )
 		{
@@ -2564,15 +2593,7 @@ void function NuclearCoreExplosionChainReaction( vector origin, table e )
 		if ( outerRadius < innerRadius )
 			outerRadius = innerRadius
 
-		RadiusDamage_DamageDef( damagedef_nuclear_core,
-			origin,
-			explosionOwner,
-			inflictor,
-			normalDamage,
-			heavyArmorDamage,
-			innerRadius,
-			outerRadius,
-			0 )
+		RadiusDamage_DamageDef( damagedef_nuclear_core, origin, explosionOwner, inflictor, normalDamage, heavyArmorDamage, innerRadius, outerRadius, 0 )
 
 		wait waitPerExplosion
 	}
@@ -2587,8 +2608,7 @@ void function NuclearCoreExplosion( vector origin, table e )
 
 	e.needToClearNukeFX = false
 
-	OnThreadEnd
-	(
+	OnThreadEnd(
 		function() : ( e )
 		{
 			ClearNuclearBlueSunEffect( e )
@@ -2662,8 +2682,7 @@ void function TitanEjectPlayerForNPCs( entity ejectTitan, bool autoEject = false
 	ejectTitan.Signal( "TitanEjectionStarted" )
 	ejectTitan.EndSignal( "OnDeath" )
 
-	OnThreadEnd
-	(
+	OnThreadEnd(
 		function() : ( e, ejectTitan, soul )
 		{
 			if ( IsAlive( ejectTitan ) )
@@ -2769,7 +2788,12 @@ void function TitanEjectPlayerForNPCs( entity ejectTitan, bool autoEject = false
 	entity rodeoPlayer = GetRodeoPilot( ejectTitan )
 
 	if ( IsValid( rodeoPlayer ) && rodeoPlayer.IsPlayer() )
-		Remote_CallFunction_Replay( rodeoPlayer, "ServerCallback_RodeoerEjectWarning", ejectTitan.GetTitanSoul().GetEncodedEHandle(), TITAN_PLAYEREJECT_DELAY + ejectDuration )
+		Remote_CallFunction_Replay(
+			rodeoPlayer,
+			"ServerCallback_RodeoerEjectWarning",
+			ejectTitan.GetTitanSoul().GetEncodedEHandle(),
+			TITAN_PLAYEREJECT_DELAY + ejectDuration
+		)
 
 	float blendDelay = 0.15
 	vector origin = ejectTitan.GetOrigin()
@@ -2836,7 +2860,7 @@ void function TitanEjectPlayerForNPCs( entity ejectTitan, bool autoEject = false
 	if ( e.nuclearPayload )
 		e.nukeFXInfoTarget.SetParent( titan, "CHESTFOCUS" )
 
-	bool isInDeepWater = expect bool ( "isInDeepWater" in ejectTitan.s && ejectTitan.s.isInDeepWater )
+	bool isInDeepWater = expect bool( "isInDeepWater" in ejectTitan.s && ejectTitan.s.isInDeepWater )
 
 	if ( e.nuclearPayload || isInDeepWater )
 		thread TitanNonSolidTemp( titan )
@@ -2879,7 +2903,7 @@ void function TitanEjectPlayerForNPCs( entity ejectTitan, bool autoEject = false
 		float gravityScale = 1.0
 
 		if ( rider.IsPlayer() )
-			gravityScale = expect float ( rider.GetPlayerSettingsField( "gravityscale" ) )
+			gravityScale = expect float( rider.GetPlayerSettingsField( "gravityscale" ) )
 
 		vector riderVelocity = AnglesToForward( riderEjectAngles ) * ( speed * gravityScale ) * 0.95
 
@@ -2895,7 +2919,7 @@ void function TitanEjectPlayerForNPCs( entity ejectTitan, bool autoEject = false
 	{
 		vector velocity = < 0, 0, speed >
 
-		e.npcPilot.SetOrigin( titan.GetOrigin() + Vector(0,0,100) )
+		e.npcPilot.SetOrigin( titan.GetOrigin() + Vector( 0, 0, 100 ) )
 		e.npcPilot.SetAngles( titan.GetAngles() )
 		e.npcPilot.SetVelocity( velocity )
 		e.overrideAttacker = e.npcPilot
