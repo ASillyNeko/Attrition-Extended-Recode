@@ -123,7 +123,7 @@ void function OnPlaying()
 	AITdm_SetLevelStalkers( GetCurrentPlaylistVarInt( "stalker_spawn_score", 380 ) )
 	AITdm_SetLevelReapers( GetCurrentPlaylistVarInt( "reaper_spawn_score", 500 ) )
 
-	if ( GetAINScriptVersion() == AIN_REV && GetNodeCount() )
+	if ( NavMesh_IsUpToDate() && GetAINScriptVersion() == AIN_REV && GetNodeCount() )
 	{
 		thread SpawnIntroBatch( TEAM_IMC )
 		delaythread( 0.0001 ) SpawnIntroBatch( TEAM_MILITIA )
