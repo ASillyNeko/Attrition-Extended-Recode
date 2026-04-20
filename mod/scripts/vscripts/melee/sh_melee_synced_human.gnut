@@ -256,26 +256,26 @@ function MeleeSyncedHumanShared_Init()
 		  #endif
 		}
 
-	    {
-		    // Stim Execution
-		    SyncedMelee syncedMelee
-		    syncedMelee.ref = "execution_stim"
-		    syncedMelee.direction = < -1, 0, 0 >
-		    syncedMelee.distance = HUMAN_EXECUTION_RANGE
-		    syncedMelee.attackerAnimation3p = "pt_mp_execution_attacker_stim"
-		    syncedMelee.targetAnimation3p = "pt_mp_execution_victim_stim"
-		    syncedMelee.thirdPersonCameraAttachment = "VDU"
-		    syncedMelee.minDot = 0.2
-		    syncedMelee.isAttackerRef = false
-		    AddSyncedMelee( meleeChooser, syncedMelee )
-		    #if SERVER
-			    AddSyncedMeleeServerThink( meleeChooser, MeleeThread_PilotVsEnemy )
-		    #endif
-	    }
+		{
+			// Stim Execution
+			SyncedMelee syncedMelee
+			syncedMelee.ref = "execution_stim"
+			syncedMelee.direction = < -1, 0, 0 >
+			syncedMelee.distance = HUMAN_EXECUTION_RANGE
+			syncedMelee.attackerAnimation3p = "pt_mp_execution_attacker_stim"
+			syncedMelee.targetAnimation3p = "pt_mp_execution_victim_stim"
+			syncedMelee.thirdPersonCameraAttachment = "VDU"
+			syncedMelee.minDot = 0.2
+			syncedMelee.isAttackerRef = false
+			AddSyncedMelee( meleeChooser, syncedMelee )
+			#if SERVER
+				AddSyncedMeleeServerThink( meleeChooser, MeleeThread_PilotVsEnemy )
+			#endif
+		}
 
-	    {
-	    	//Grapple Execution
-	    	#if SERVER
+		{
+			//Grapple Execution
+			#if SERVER
 				AnimEventData headstabEvent
 				headstabEvent.eventName = "headstab_death"
 				headstabEvent.callback = AnimEvent_headstab_death
@@ -300,119 +300,119 @@ function MeleeSyncedHumanShared_Init()
 			#endif
 			syncedMelee.thirdPersonCameraAttachment = "VDU"
 			syncedMelee.minDot = 0.2
-		    syncedMelee.isAttackerRef = false
+			syncedMelee.isAttackerRef = false
 			AddSyncedMelee( meleeChooser, syncedMelee )
 			#if SERVER
 				AddSyncedMeleeServerThink( meleeChooser, MeleeThread_PilotVsEnemy )
 			#endif
 		}
 
-	    {
-		    // PulseBlade Execution
+		{
+			// PulseBlade Execution
 
-		    #if SERVER
-			    AnimEventData givePulseBladeEvent
-	    		givePulseBladeEvent.eventName = "attach_pulseBlade"
-	    		givePulseBladeEvent.callback = AnimEvent_attach_pulseBlade
+			#if SERVER
+				AnimEventData givePulseBladeEvent
+				givePulseBladeEvent.eventName = "attach_pulseBlade"
+				givePulseBladeEvent.callback = AnimEvent_attach_pulseBlade
 
-	    		AnimEventData headstabEvent
+				AnimEventData headstabEvent
 				headstabEvent.eventName = "headstab_death"
 				headstabEvent.callback = AnimEvent_headstab_death
 
-	    		AnimEventData takePulseBladeEvent
-	    		takePulseBladeEvent.eventName = "detach_pulseBlade"
-	    		takePulseBladeEvent.callback = AnimEvent_detach_pulseBlade
+				AnimEventData takePulseBladeEvent
+				takePulseBladeEvent.eventName = "detach_pulseBlade"
+				takePulseBladeEvent.callback = AnimEvent_detach_pulseBlade
 
-	    		AnimEventData playSonarExecutionSounds
-	    		playSonarExecutionSounds.eventName = "play_sonar_execution_sounds"
-	    		playSonarExecutionSounds.callback = AnimEvent_play_sonar_execution_sounds
+				AnimEventData playSonarExecutionSounds
+				playSonarExecutionSounds.eventName = "play_sonar_execution_sounds"
+				playSonarExecutionSounds.callback = AnimEvent_play_sonar_execution_sounds
 
-	    		AnimEventData mriPulseEvent
-	    		mriPulseEvent.eventName = "mri_effect"
-	    		mriPulseEvent.callback = AnimEvent_mriPulseEvent
+				AnimEventData mriPulseEvent
+				mriPulseEvent.eventName = "mri_effect"
+				mriPulseEvent.callback = AnimEvent_mriPulseEvent
 
 
-		    #endif
+			#endif
 
-		    SyncedMelee syncedMelee
-		    syncedMelee.ref = "execution_pulseblade"
-		    syncedMelee.direction = < -1, 0, 0 >
-		    syncedMelee.distance = HUMAN_EXECUTION_RANGE
-		    syncedMelee.attackerAnimation3p = "pt_mp_execution_attacker_pulseblade"
-		    syncedMelee.targetAnimation3p = "pt_mp_execution_victim_pulseblade"
-		    syncedMelee.thirdPersonCameraAttachment = "VDU"
+			SyncedMelee syncedMelee
+			syncedMelee.ref = "execution_pulseblade"
+			syncedMelee.direction = < -1, 0, 0 >
+			syncedMelee.distance = HUMAN_EXECUTION_RANGE
+			syncedMelee.attackerAnimation3p = "pt_mp_execution_attacker_pulseblade"
+			syncedMelee.targetAnimation3p = "pt_mp_execution_victim_pulseblade"
+			syncedMelee.thirdPersonCameraAttachment = "VDU"
 
-		    #if SERVER
-		    	syncedMelee.attacker3pAnimEvents = [ givePulseBladeEvent, takePulseBladeEvent ]
-		    	syncedMelee.target3pAnimEvents = [ headstabEvent, mriPulseEvent, playSonarExecutionSounds ]
-		    #endif
+			#if SERVER
+				syncedMelee.attacker3pAnimEvents = [ givePulseBladeEvent, takePulseBladeEvent ]
+				syncedMelee.target3pAnimEvents = [ headstabEvent, mriPulseEvent, playSonarExecutionSounds ]
+			#endif
 
-		    syncedMelee.minDot = 0.2
-		    syncedMelee.isAttackerRef = false
-		    AddSyncedMelee( meleeChooser, syncedMelee )
-		    #if SERVER
-			    AddSyncedMeleeServerThink( meleeChooser, MeleeThread_PilotVsEnemy )
-		    #endif
-	    }
+			syncedMelee.minDot = 0.2
+			syncedMelee.isAttackerRef = false
+			AddSyncedMelee( meleeChooser, syncedMelee )
+			#if SERVER
+				AddSyncedMeleeServerThink( meleeChooser, MeleeThread_PilotVsEnemy )
+			#endif
+		}
 
-	    {
-	    	//Cloak execution
-	    	#if SERVER
-		    	AnimEventData giveKnifeEvent
-		    	giveKnifeEvent.eventName = "attach_knife"
-		    	giveKnifeEvent.callback = AnimEvent_attach_knife
+		{
+			//Cloak execution
+			#if SERVER
+				AnimEventData giveKnifeEvent
+				giveKnifeEvent.eventName = "attach_knife"
+				giveKnifeEvent.callback = AnimEvent_attach_knife
 
-		    	AnimEventData takeKnifeEvent
-		    	takeKnifeEvent.eventName = "detach_knife"
-		    	takeKnifeEvent.callback = AnimEvent_detach_knife
+				AnimEventData takeKnifeEvent
+				takeKnifeEvent.eventName = "detach_knife"
+				takeKnifeEvent.callback = AnimEvent_detach_knife
 
-		    	AnimEventData cloakOnEvent
-		    	cloakOnEvent.eventName = "cloak_on"
-		    	cloakOnEvent.callback = AnimEvent_Cloak_On
+				AnimEventData cloakOnEvent
+				cloakOnEvent.eventName = "cloak_on"
+				cloakOnEvent.callback = AnimEvent_Cloak_On
 
-		    	AnimEventData cloakOffEvent
-		    	cloakOffEvent.eventName = "cloak_off"
-		    	cloakOffEvent.callback = AnimEvent_Cloak_Off
+				AnimEventData cloakOffEvent
+				cloakOffEvent.eventName = "cloak_off"
+				cloakOffEvent.callback = AnimEvent_Cloak_Off
 
-		    	AnimEventData headStabEvent
-		    	headStabEvent.eventName = "headshot_death" //Use head shot instead of headstab for this execution
-		    	headStabEvent.callback = AnimEvent_headshot_death
+				AnimEventData headStabEvent
+				headStabEvent.eventName = "headshot_death" //Use head shot instead of headstab for this execution
+				headStabEvent.callback = AnimEvent_headshot_death
 
-		    	AnimEventData turnoffExecutionDOFEvent
-		    	turnoffExecutionDOFEvent.eventName = "turnoff_execution_dof"
-		    	turnoffExecutionDOFEvent.callback = AnimEvent_turnoff_executionDOF
+				AnimEventData turnoffExecutionDOFEvent
+				turnoffExecutionDOFEvent.eventName = "turnoff_execution_dof"
+				turnoffExecutionDOFEvent.callback = AnimEvent_turnoff_executionDOF
 
-		    	AnimEventData mechanicalSparkSoundEvent
+				AnimEventData mechanicalSparkSoundEvent
 				mechanicalSparkSoundEvent.eventName = "mechanical_sparks_sound"
 				mechanicalSparkSoundEvent.callback = AnimEvent_mechanical_sparks_sound_event
-	    	#endif
+			#endif
 
-	    	SyncedMelee syncedMelee
-	    	syncedMelee.ref = "execution_cloak"
-	    	syncedMelee.direction = < -1, 0, 0 >
-	    	syncedMelee.distance = HUMAN_EXECUTION_RANGE
-	    	syncedMelee.attackerAnimation3p = "pt_mp_execution_attacker_cloak"
-	    	syncedMelee.targetAnimation3p = "pt_mp_execution_victim_cloak"
-	    	syncedMelee.thirdPersonCameraAttachment = "VDU"
+			SyncedMelee syncedMelee
+			syncedMelee.ref = "execution_cloak"
+			syncedMelee.direction = < -1, 0, 0 >
+			syncedMelee.distance = HUMAN_EXECUTION_RANGE
+			syncedMelee.attackerAnimation3p = "pt_mp_execution_attacker_cloak"
+			syncedMelee.targetAnimation3p = "pt_mp_execution_victim_cloak"
+			syncedMelee.thirdPersonCameraAttachment = "VDU"
 
-	    	#if SERVER
-	    		syncedMelee.attacker3pAnimEvents = [ giveKnifeEvent, takeKnifeEvent, cloakOnEvent, cloakOffEvent, turnoffExecutionDOFEvent ]
-	    		syncedMelee.target3pAnimEvents = [ headStabEvent, turnoffExecutionDOFEvent, mechanicalSparkSoundEvent ]
-	    	#endif
-
-    	    syncedMelee.minDot = 0.2
-    	    syncedMelee.isAttackerRef = false
-    	    AddSyncedMelee( meleeChooser, syncedMelee )
-    	    #if SERVER
-    		    AddSyncedMeleeServerThink( meleeChooser, MeleeThread_PilotVsEnemy )
-    	    #endif
-
-	    }
-
-	    {
-		    //Holopilot Execution
 			#if SERVER
-		    	AnimEventData givePistolEvent
+				syncedMelee.attacker3pAnimEvents = [ giveKnifeEvent, takeKnifeEvent, cloakOnEvent, cloakOffEvent, turnoffExecutionDOFEvent ]
+				syncedMelee.target3pAnimEvents = [ headStabEvent, turnoffExecutionDOFEvent, mechanicalSparkSoundEvent ]
+			#endif
+
+			syncedMelee.minDot = 0.2
+			syncedMelee.isAttackerRef = false
+			AddSyncedMelee( meleeChooser, syncedMelee )
+			#if SERVER
+				AddSyncedMeleeServerThink( meleeChooser, MeleeThread_PilotVsEnemy )
+			#endif
+
+		}
+
+		{
+			//Holopilot Execution
+			#if SERVER
+				AnimEventData givePistolEvent
 				givePistolEvent.eventName = "attach_pistol"
 				givePistolEvent.callback = AnimEvent_attach_wingman
 
@@ -420,15 +420,15 @@ function MeleeSyncedHumanShared_Init()
 				takePistolEvent.eventName = "detach_pistol"
 				takePistolEvent.callback = AnimEvent_detach_pistol
 
-		    	AnimEventData spawnDecoy1Event
+				AnimEventData spawnDecoy1Event
 				spawnDecoy1Event.eventName = "spawn_decoy1"
 				spawnDecoy1Event.callback = AnimEvent_spawn_decoy1
 
-		    	AnimEventData spawnDecoy2Event
+				AnimEventData spawnDecoy2Event
 				spawnDecoy2Event.eventName = "spawn_decoy2"
 				spawnDecoy2Event.callback = AnimEvent_spawn_decoy2
 
-		    	AnimEventData spawnDecoy3Event
+				AnimEventData spawnDecoy3Event
 				spawnDecoy3Event.eventName = "spawn_decoy3"
 				spawnDecoy3Event.callback = AnimEvent_spawn_decoy3
 
@@ -454,19 +454,19 @@ function MeleeSyncedHumanShared_Init()
 				syncedMelee.target3pAnimEvents = [headshotEvent, holopilotHeadshotSFXEvent ]
 			#endif
 
-		    syncedMelee.minDot = 0.2
-		    syncedMelee.isAttackerRef = false
-		    AddSyncedMelee( meleeChooser, syncedMelee )
-		    #if SERVER
-			    AddSyncedMeleeServerThink( meleeChooser, MeleeThread_PilotVsEnemy )
-		    #endif
+			syncedMelee.minDot = 0.2
+			syncedMelee.isAttackerRef = false
+			AddSyncedMelee( meleeChooser, syncedMelee )
+			#if SERVER
+				AddSyncedMeleeServerThink( meleeChooser, MeleeThread_PilotVsEnemy )
+			#endif
 		}
 
-	    //Amped Wall Execution
-	    {
+		//Amped Wall Execution
+		{
 
-    	#if SERVER
-	    	AnimEventData givePistolEvent
+		#if SERVER
+			AnimEventData givePistolEvent
 			givePistolEvent.eventName = "attach_pistol"
 			givePistolEvent.callback = AnimEvent_attach_wingman_awall_execution
 
@@ -515,27 +515,27 @@ function MeleeSyncedHumanShared_Init()
 			aWallVictimBodyfallSoundEvent.callback = AnimEvent_awall_victim_bodyfall_sfx
 
 
-    	#endif
+		#endif
 
-	        	SyncedMelee syncedMelee
-	        	syncedMelee.ref = "execution_ampedwall"
-	        	syncedMelee.direction = < -1, 0, 0 >
-	        	syncedMelee.distance = HUMAN_EXECUTION_RANGE
-	        	syncedMelee.attackerAnimation3p = "pt_mp_execution_attacker_awall"
-	        	syncedMelee.targetAnimation3p = "pt_mp_execution_victim_awall"
-	        	syncedMelee.thirdPersonCameraAttachment = "VDU"
+				SyncedMelee syncedMelee
+				syncedMelee.ref = "execution_ampedwall"
+				syncedMelee.direction = < -1, 0, 0 >
+				syncedMelee.distance = HUMAN_EXECUTION_RANGE
+				syncedMelee.attackerAnimation3p = "pt_mp_execution_attacker_awall"
+				syncedMelee.targetAnimation3p = "pt_mp_execution_victim_awall"
+				syncedMelee.thirdPersonCameraAttachment = "VDU"
 
-	        	#if SERVER
-	        		syncedMelee.attacker3pAnimEvents = [ turnoffExecutionDOFEvent, givePistolEvent,takePistolEvent, spawnAWallEvent ]
-	        		syncedMelee.target3pAnimEvents = [ turnoffExecutionDOFEvent, aWallVictimStartSoundEvent, aWallVictimShieldSoundEvent, aWallVictimImpact01SoundEvent, aWallVictimImpact02SoundEvent, aWallVictimImpact03SoundEvent, aWallVictimBodyfallSoundEvent, headshotEvent, frontShotHighEvent ]
-	        	#endif
+				#if SERVER
+					syncedMelee.attacker3pAnimEvents = [ turnoffExecutionDOFEvent, givePistolEvent,takePistolEvent, spawnAWallEvent ]
+					syncedMelee.target3pAnimEvents = [ turnoffExecutionDOFEvent, aWallVictimStartSoundEvent, aWallVictimShieldSoundEvent, aWallVictimImpact01SoundEvent, aWallVictimImpact02SoundEvent, aWallVictimImpact03SoundEvent, aWallVictimBodyfallSoundEvent, headshotEvent, frontShotHighEvent ]
+				#endif
 
-	    	    syncedMelee.minDot = 0.2
-	    	    syncedMelee.isAttackerRef = false
-	    	    AddSyncedMelee( meleeChooser, syncedMelee )
-	    	    #if SERVER
-	    		    AddSyncedMeleeServerThink( meleeChooser, MeleeThread_PilotVsEnemy )
-	    	    #endif
+				syncedMelee.minDot = 0.2
+				syncedMelee.isAttackerRef = false
+				AddSyncedMelee( meleeChooser, syncedMelee )
+				#if SERVER
+					AddSyncedMeleeServerThink( meleeChooser, MeleeThread_PilotVsEnemy )
+				#endif
 
 	   	}
 
@@ -845,10 +845,10 @@ void function AnimEvent_mriPulseEvent( entity ent )
 
 void function AnimEvent_Cloak_On( entity ent )
 {
-    if ( ent.IsPlayer() )
-	    EnableCloak( ent, 1.5, 0.35 ) //Make sure duration is longer than animation seqeunce length
-    else
-        EnableCloakNPC( ent, 1.5, 0.35 )
+	if ( ent.IsPlayer() )
+		EnableCloak( ent, 1.5, 0.35 )
+	else
+		EnableCloakNPC( ent, 1.5, 0.35 )
 
 }
 
@@ -858,34 +858,26 @@ void function EnableCloakNPC( entity player, float duration, float fadeIn = 1.0 
 	EmitSoundOnEntity( player, "cloak_sustain_loop_3P" )
 
 	float cloakDuration = duration - fadeIn
-    
-    player.SetCanCloak( true )
+
+	player.SetCanCloak( true )
 
 	player.SetCloakDuration( fadeIn, cloakDuration, 1.0 )
 }
 
 void function AnimEvent_Cloak_Off( entity ent )
 {
-    if ( ent.IsPlayer() )
-	    DisableCloak( ent, 0.35 )
-    else
-        DisableCloakNPC( ent, 0.35 )
+	if ( ent.IsPlayer() )
+		DisableCloak( ent, 0.35 )
+	else
+		DisableCloakNPC( ent, 0.35 )
 }
 
 void function DisableCloakNPC( entity player, float fadeOut = 1.0 )
 {
-	StopSoundOnEntity( player, "cloak_sustain_loop_1P" )
 	StopSoundOnEntity( player, "cloak_sustain_loop_3P" )
 
-	bool wasCloaked = player.IsCloaked( CLOAK_INCLUDE_FADE_IN_TIME )
-
-	if ( fadeOut < 1.0 && wasCloaked )
-	{
+	if ( player.IsCloaked( CLOAK_INCLUDE_FADE_IN_TIME ) )
 		EmitSoundOnEntity( player, "cloak_interruptend_3P" )
-
-		StopSoundOnEntity( player, "cloak_warningtoend_1P" )
-		StopSoundOnEntity( player, "cloak_warningtoend_3P" )
-	}
 
 	player.SetCloakDuration( 0, 0, fadeOut )
 }
@@ -912,6 +904,7 @@ void function AnimEvent_spawn_decoy1( entity ent )
 	if ( ent.IsPlayer() )
 	{
 		entity decoy = ent.CreateAnimatedPlayerDecoy( "pt_mp_execution_attacker_hologram_01" )
+
 		SetupDecoy_Common( ent, decoy )
 		HoloPilot_Execution_DecoySetup( decoy )
 		thread HoloPilot_Execution_MonitorLifeTime( ent, decoy )
@@ -919,6 +912,7 @@ void function AnimEvent_spawn_decoy1( entity ent )
 	else
 	{
 		entity decoy = CreateFakeDecoyForNPC( ent )
+
 		decoy.Anim_ScriptedPlay( "pt_mp_execution_attacker_hologram_01" )
 	}
 }
@@ -928,6 +922,7 @@ void function AnimEvent_spawn_decoy2( entity ent )
 	if ( ent.IsPlayer() )
 	{
 		entity decoy = ent.CreateAnimatedPlayerDecoy( "pt_mp_execution_attacker_hologram_02" )
+
 		SetupDecoy_Common( ent, decoy )
 		HoloPilot_Execution_DecoySetup( decoy )
 		thread HoloPilot_Execution_MonitorLifeTime( ent, decoy )
@@ -935,6 +930,7 @@ void function AnimEvent_spawn_decoy2( entity ent )
 	else
 	{
 		entity decoy = CreateFakeDecoyForNPC( ent )
+
 		decoy.Anim_ScriptedPlay( "pt_mp_execution_attacker_hologram_02" )
 	}
 }
@@ -944,6 +940,7 @@ void function AnimEvent_spawn_decoy3( entity ent )
 	if ( ent.IsPlayer() )
 	{
 		entity decoy = ent.CreateAnimatedPlayerDecoy( "pt_mp_execution_attacker_hologram_03" )
+
 		SetupDecoy_Common( ent, decoy )
 		HoloPilot_Execution_DecoySetup( decoy )
 		thread HoloPilot_Execution_MonitorLifeTime( ent, decoy )
@@ -951,15 +948,15 @@ void function AnimEvent_spawn_decoy3( entity ent )
 	else
 	{
 		entity decoy = CreateFakeDecoyForNPC( ent )
+
 		decoy.Anim_ScriptedPlay( "pt_mp_execution_attacker_hologram_03" )
 	}
 }
 
 void function HoloPilot_Execution_DecoySetup( entity decoy )
 {
-	/*decoy.SetMaxHealth( 50 )
-	decoy.SetHealth( 50 )*/
 	SetObjectCanBeMeleed( decoy, false )
+
 	if ( decoy.IsPlayerDecoy() )
 	{
 		decoy.SetNameVisibleToOwner( false )
@@ -967,8 +964,10 @@ void function HoloPilot_Execution_DecoySetup( entity decoy )
 		decoy.SetNameVisibleToEnemy( false )
 		decoy.SetTimeout( DECOY_DURATION )
 	}
+
 	decoy.NotSolid()
-	AddAnimEvent( decoy, "decoy_dissolve", HoloPilot_Execution_DissolveDecoy ) //Doesn't seem to work for decoy entities?
+
+	AddAnimEvent( decoy, "decoy_dissolve", HoloPilot_Execution_DissolveDecoy )
 }
 
 entity function CreateFakeDecoyForNPC( entity ent )
@@ -981,16 +980,18 @@ entity function CreateFakeDecoyForNPC( entity ent )
 	asset modelName = ent.GetModelName()
 
 	entity decoy = CreateNPC( className, team, origin, angles )
+
 	SetSpawnOption_AISettings( decoy, aiSettings )
 
 	decoy.SetValueForModelKey( modelName )
-	DispatchSpawn( decoy )
-	decoy.SetModel( modelName )
 
+	DispatchSpawn( decoy )
+
+	decoy.SetModel( modelName )
 	decoy.SetOwner( ent )
 	decoy.SetInvulnerable()
 
-    TakeWeaponsForArray( decoy, decoy.GetMainWeapons() )
+	TakeWeaponsForArray( decoy, decoy.GetMainWeapons() )
 
 	SetupPropDecoy( ent, decoy )
 	HoloPilot_Execution_DecoySetup( decoy )
@@ -1022,30 +1023,35 @@ void function SetupPropDecoy( entity owner, entity prop )
 
 	EmitSoundOnEntityToTeam( prop, "holopilot_loop", friendlyTeam )
 	EmitSoundOnEntityToEnemies( prop, "holopilot_loop_enemy", friendlyTeam )
+
 	propDecoy.propDecoyFakeStruct[ prop ].loopingSounds.extend( [ "holopilot_loop", "holopilot_loop_enemy" ] )
 
 	Highlight_SetFriendlyHighlight( prop, "friendly_player_decoy" )
-	Highlight_SetEnemyHighlight( prop, "sp_enemy_pilot" ) // always show in los!
-	prop.Highlight_SetParam( 2, 0, HIGHLIGHT_COLOR_FRIENDLY ) // enemy highlight
+	Highlight_SetEnemyHighlight( prop, "sp_enemy_pilot" )
+
+	prop.Highlight_SetParam( 2, 0, HIGHLIGHT_COLOR_FRIENDLY )
 
 	entity holoPilotTrailFX = StartParticleEffectOnEntity_ReturnEntity( prop, HOLO_PILOT_TRAIL_FX, FX_PATTACH_POINT_FOLLOW, prop.LookupAttachment( "CHESTFOCUS" ) )
+
 	SetTeam( holoPilotTrailFX, friendlyTeam )
+
 	holoPilotTrailFX.kv.VisibilityFlags = ENTITY_VISIBLE_TO_FRIENDLY
+
 	propDecoy.propDecoyFakeStruct[ prop ].particleEffects.append( holoPilotTrailFX )
 }
 
 void function DissolveFakeDecoy( entity prop )
 {
 	prop.Dissolve( ENTITY_DISSOLVE_CHAR, < 0, 0, 0 >, 0 )
+
 	if ( prop in propDecoy.propDecoyFakeStruct )
 	{
 		foreach ( string sound in propDecoy.propDecoyFakeStruct[ prop ].loopingSounds )
 			StopSoundOnEntity( prop, sound )
+
 		foreach ( entity effect in propDecoy.propDecoyFakeStruct[ prop ].particleEffects )
-		{
 			if ( IsValid( effect ) )
 				EffectStop( effect )
-		}
 	}
 }
 
@@ -1061,27 +1067,28 @@ void function HoloPilot_Execution_MonitorLifeTime( entity attacker, entity decoy
 {
 	attacker.EndSignal( "OnDeath" )
 	attacker.EndSignal( "OnDestroy" )
+
 	decoy.EndSignal( "OnDestroy" )
 
-	OnThreadEnd(
-	function() : ( decoy )
+	OnThreadEnd
+	(
+		function() : ( decoy )
 		{
-			if( IsValid( decoy ) && decoy.IsPlayerDecoy() )
+			if ( IsValid( decoy ) && decoy.IsPlayerDecoy() )
 				decoy.Decoy_Dissolve()
-            else if ( IsValid( decoy ) )
-                DissolveFakeDecoy( decoy )
+			else if ( IsValid( decoy ) )
+				DissolveFakeDecoy( decoy )
 
 		}
 	)
 
-	wait 0.1 //0.1s chosen because it looks fine
+	wait 0.1
 
 }
 
 void function HoloPilot_Execution_DissolveDecoy( entity decoy )
 {
-	//PrintFunc()
-	if( IsValid( decoy ) && decoy.IsPlayerDecoy() )
+	if ( IsValid( decoy ) && decoy.IsPlayerDecoy() )
 		decoy.Decoy_Dissolve()
 }
 
