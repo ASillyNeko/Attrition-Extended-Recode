@@ -13,4 +13,4 @@ jobs:
           chmod +x sqformat
 
       - name: Check formatting
-        run: ./sqformat --check -r .
+        run: ./sqformat -dr .
