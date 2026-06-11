@@ -5,6 +5,8 @@ on:
     types:
       - published
 
+permissions: {}
+
 env:
   name: ${{ github.event.repository.name }}
 
@@ -13,10 +15,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        env:
+          Ref_Name: ${{ github.ref_name }}
+        with:
+          persist-credentials: false
       - name: Get clean version
         run: |
-          echo cleanVersion=$(echo ${{ github.ref_name }} | sed s/v//g) >> $GITHUB_ENV
+          echo cleanVersion=$(echo $Ref_Name | sed s/v//g) >> $GITHUB_ENV
 
       - name: Check that version matches
         run: |
@@ -32,23 +38,25 @@ jobs:
     needs: verify
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
       - name: Upload Thunderstore Package
-        uses: GreenTF/upload-thunderstore-package@v4.3
+        uses: GreenTF/upload-thunderstore-package@aef20d7e07a0858d0decae64872aa5526662ab8d # v4.3
         with:
           community: northstar
 
           namespace: ASillyNeko
 
-          name: Attrition_Extended_Recode
+          name: Discord_To_Titanfall_Bridge
 
           version: ${{ github.ref_name }}
 
-          description: Attrition Extended without crashes.
+          description: Bridges Discord And Titanfall 2 Messages
 
           token: ${{ secrets.TS_KEY }} 
 
-          wrap: mods/Nekos.Attrition.Extended.Recode
+          wrap: mods/Nekos.Discord_To_Titanfall_Bridge
 
           repo: northstar.thunderstore.io
 

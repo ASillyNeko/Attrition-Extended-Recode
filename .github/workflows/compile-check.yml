@@ -2,6 +2,8 @@ name: compile-check
 
 on: [ push, pull_request ]
 
+permissions: {}
+
 jobs:
   compile:
     runs-on: windows-latest
@@ -10,24 +12,28 @@ jobs:
 
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           path: NorthstarMod
+          persist-credentials: false
 
       - name: Checkout Northstar Mods
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: R2Northstar/NorthstarMods
           ref: main
           path: mods/
+          persist-credentials: false
 
       - name: Copy Northstar Mod Into Mods
-        shell: cmd
         run: |
-          xcopy NorthstarMod\%NS_MOD_DIR% mods\NorthstarMod /E /I /Y
+          $SourcePath = Join-Path "NorthstarMod" "$env:NS_MOD_DIR"
+          New-Item -ItemType Directory -Force -Path "mods\NorthstarMod"
+          Copy-Item -Path "$SourcePath\*" -Destination "mods\NorthstarMod" -Recurse -Force
 
       - name: Compile Scripts
-        uses: ASpoonPlaysGames/squirrel-re-compiler@v3
+        uses: ASpoonPlaysGames/squirrel-re-compiler@d1f094852c8d8e6fdf49b26b7b74f119bb5731a0 # v3.0.4
         with:
           mods-directory: "${{ github.workspace }}/mods"
           native-json: "${{ github.workspace }}/NorthstarMod/.github/natives.json"
+          vanilla: false
