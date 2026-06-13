@@ -710,7 +710,7 @@ void function PilotSpeedFlagsHPAndBehavior( entity npc )
 	thread OnFlagChanged( npc, [ NPC_NO_PAIN, NPC_NO_GESTURE_PAIN, NPC_ALLOW_PATROL, NPC_ALLOW_INVESTIGATE, NPC_IGNORE_FRIENDLY_SOUND ] )
 	thread OnFlagChanged( npc, [ NPC_PAIN_IN_SCRIPTED_ANIM, NPC_ALLOW_FLEE ], true )
 
-	npc.SetMaxHealth( 500 )
+	npc.SetMaxHealth( 250 ) // 500
 	npc.SetHealth( npc.GetMaxHealth() )
 	npc.SetBehaviorSelector( "behavior_sp_soldier" )
 	npc.SetEnemyChangeCallback( OnNPCPilotEnemyChange )
