@@ -214,12 +214,15 @@ void function Spawner( int team )
 
 void function AddEnemyTeamScore( entity guy, var damageInfo )
 {
-	if ( !Is_AttritionExtendedRecode_Entity( guy ) )
-		return
-
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 
-	if ( !IsValid( attacker ) || ( !attacker.IsPlayer() && !Is_AttritionExtendedRecode_Entity( attacker ) ) )
+	if ( guy == attacker || !( attacker.IsPlayer() || attacker.IsTitan() ) || GetGameState() != eGameState.Playing )
+		return
+
+	if ( attacker.IsNPC() && attacker.IsTitan() && !IsValid( GetPetTitanOwner( attacker ) ) )
+		return
+
+	if ( !Is_AttritionExtendedRecode_Entity( guy ) )
 		return
 
 	if ( !guy.IsTitan() || ( guy.IsTitan() && AttritionExtendedRecode_TitanHasNpcPilot( guy ) ) )
@@ -230,6 +233,8 @@ void function AddEnemyTeamScore( entity guy, var damageInfo )
 		{
 			attacker.AddToPlayerGameStat( PGS_NPC_KILLS, 1 )
 			attacker.AddToPlayerGameStat( PGS_ASSAULT_SCORE, 5 )
+
+			AddPlayerScore( attacker, "KillGrunt" )
 
 			int assaultscore = attacker.GetPlayerGameStat( PGS_ASSAULT_SCORE )
 			int assaultscore256 = assaultscore / 256
@@ -1394,8 +1399,8 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team, bool intros
 	RandomPilotWeapons( pilot )
 
 	pilot.kv.grenadeWeaponName = file.pilotgrenades.getrandom()
-	pilot.kv.AccuracyMultiplier = 2.5
-	pilot.kv.WeaponProficiency = eWeaponProficiency.VERYGOOD
+	pilot.kv.AccuracyMultiplier = 1.0 // 2.5
+	pilot.kv.WeaponProficiency = eWeaponProficiency.GOOD // eWeaponProficiency.VERYGOOD
 
 	PilotSpeedFlagsHPAndBehavior( pilot )
 
@@ -1473,8 +1478,8 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 	RandomPilotWeapons( pilot )
 
 	pilot.kv.grenadeWeaponName = file.pilotgrenades.getrandom()
-	pilot.kv.AccuracyMultiplier = 2.5
-	pilot.kv.WeaponProficiency = eWeaponProficiency.VERYGOOD
+	pilot.kv.AccuracyMultiplier = 1.0 // 2.5
+	pilot.kv.WeaponProficiency = eWeaponProficiency.GOOD // eWeaponProficiency.VERYGOOD
 	pilot.SetModel( file.pilotmodels.getrandom() )
 	pilot.EnableNPCFlag( NPC_IGNORE_ALL )
 	pilot.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
