@@ -3,6 +3,7 @@ global function AttritionExtendedRecodePlaylistvars_Init
 void function AttritionExtendedRecodePlaylistvars_Init()
 {
 	AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "squad_count", "4", "Squad Count" )
+	AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "spectre_count", "12", "Spectre Count" )
 	AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "reaper_count", "2", "Reaper Count" )
 	AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "piloted_titan_count", "3", "Piloted Titan Count" )
 	AddPrivateMatchModeSettingArbitrary( "Attrition Extended Recode", "piloted_titan_ramp_up_score", "150", "Piloted Titan Ramp Up Score" )

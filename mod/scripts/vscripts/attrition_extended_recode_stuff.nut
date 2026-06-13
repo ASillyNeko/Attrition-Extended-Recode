@@ -8,7 +8,7 @@ global function AttritionExtendedRecode_SpawnedUnPilotedTitans
 global function AttritionExtendedRecode_TitanHasNpcPilot
 global function AttritionExtendedRecode_GetTitanModel
 global function Is_AttritionExtendedRecode_Entity
-global function AttritionExtendedRecode_CustomTitan
+global function AttritionExtendedRecode_AddCustomTitan
 
 global struct AttritionExtendedRecode_CustomTitanStruct
 {
@@ -118,6 +118,7 @@ void function AttritionExtendedRecode_Init()
 void function OnPlaying()
 {
 	AITdm_SetSquadsPerTeam( GetCurrentPlaylistVarInt( "squad_count", 4 ) )
+	AITdm_SetSpectresPerTeam( GetCurrentPlaylistVarInt( "spectre_count", 12 ) )
 	AITdm_SetReapersPerTeam( GetCurrentPlaylistVarInt( "reaper_count", 2 ) )
 	AITdm_SetLevelSpectres( GetCurrentPlaylistVarInt( "spectre_spawn_score", 125 ) )
 	AITdm_SetLevelStalkers( GetCurrentPlaylistVarInt( "stalker_spawn_score", 380 ) )
@@ -315,7 +316,7 @@ bool function Is_AttritionExtendedRecode_Entity( entity guy )
 	return false
 }
 
-void function AttritionExtendedRecode_CustomTitan( AttritionExtendedRecode_CustomTitanStruct CustomTitan )
+void function AttritionExtendedRecode_AddCustomTitan( AttritionExtendedRecode_CustomTitanStruct CustomTitan )
 {
 	CustomTitan.UID = file.CustomTitans.len()
 
@@ -1572,7 +1573,7 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 
 		if ( CustomTitan.HP > 0 )
 		{
-			titan.SetMaxHealth( CustomTitan.HP )
+			titan.SetMaxHealth( min( MAX_HEALTH, CustomTitan.HP ) )
 			titan.SetHealth( titan.GetMaxHealth() )
 		}
 	}
@@ -1863,7 +1864,7 @@ entity function AttritionExtendedRecode_NpcPilotCallsInTitan( entity pilot, vect
 
 		if ( CustomTitan.HP > 0 )
 		{
-			titan.SetMaxHealth( CustomTitan.HP )
+			titan.SetMaxHealth( min( MAX_HEALTH, CustomTitan.HP ) )
 			titan.SetHealth( titan.GetMaxHealth() )
 		}
 	}
