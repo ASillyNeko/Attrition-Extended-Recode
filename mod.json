@@ -8,17 +8,17 @@
 			"Path": "attrition_extended_recode_stuff.nut",
 			"RunOn": "SERVER && MP",
 			"ServerCallback": {
-				"Before": "AttritionExtendedRecode_Init"
+				"After": "AttritionExtendedRecode_Init"
 			}
 		},
 		{
 			"Path": "attrition_extended_recode_playlistvars.nut",
 			"RunOn": "MP",
 			"ServerCallback": {
-				"Before": "AttritionExtendedRecodePlaylistvars_Init"
+				"After": "AttritionExtendedRecodePlaylistvars_Init"
 			},
 			"ClientCallback": {
-				"Before": "AttritionExtendedRecodePlaylistvars_Init"
+				"After": "AttritionExtendedRecodePlaylistvars_Init"
 			}
 		}
 	]
