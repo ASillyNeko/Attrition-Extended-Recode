@@ -48,15 +48,15 @@ jobs:
 
           namespace: ASillyNeko
 
-          name: Discord_To_Titanfall_Bridge
+          name: Attrition_Extended_Recode
 
           version: ${{ github.ref_name }}
 
-          description: Bridges Discord And Titanfall 2 Messages
+          description: Attrition Extended without crashes.
 
           token: ${{ secrets.TS_KEY }} 
 
-          wrap: mods/Nekos.Discord_To_Titanfall_Bridge
+          wrap: mods/Nekos.Attrition.Extended.Recode
 
           repo: northstar.thunderstore.io
 
