@@ -109,6 +109,12 @@ void function AttritionExtendedRecode_Init()
 
 	if ( GAMETYPE == "aitdm" )
 	{
+		AITdm_SetSquadsPerTeam( GetCurrentPlaylistVarInt( "squad_count", 4 ) )
+		AITdm_SetSpectresPerTeam( GetCurrentPlaylistVarInt( "spectre_count", 12 ) )
+		AITdm_SetReapersPerTeam( GetCurrentPlaylistVarInt( "reaper_count", 2 ) )
+		AITdm_SetLevelSpectres( GetCurrentPlaylistVarInt( "spectre_spawn_score", 125 ) )
+		AITdm_SetLevelStalkers( GetCurrentPlaylistVarInt( "stalker_spawn_score", 380 ) )
+		AITdm_SetLevelReapers( GetCurrentPlaylistVarInt( "reaper_spawn_score", 500 ) )
 		AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
 		AddDeathCallback( "npc_pilot_elite", AddEnemyTeamScore )
 		AddDeathCallback( "npc_titan", AddEnemyTeamScore )
@@ -117,13 +123,6 @@ void function AttritionExtendedRecode_Init()
 
 void function OnPlaying()
 {
-	AITdm_SetSquadsPerTeam( GetCurrentPlaylistVarInt( "squad_count", 4 ) )
-	AITdm_SetSpectresPerTeam( GetCurrentPlaylistVarInt( "spectre_count", 12 ) )
-	AITdm_SetReapersPerTeam( GetCurrentPlaylistVarInt( "reaper_count", 2 ) )
-	AITdm_SetLevelSpectres( GetCurrentPlaylistVarInt( "spectre_spawn_score", 125 ) )
-	AITdm_SetLevelStalkers( GetCurrentPlaylistVarInt( "stalker_spawn_score", 380 ) )
-	AITdm_SetLevelReapers( GetCurrentPlaylistVarInt( "reaper_spawn_score", 500 ) )
-
 	if ( NavMesh_IsUpToDate() && GetAINScriptVersion() == AIN_REV && GetNodeCount() )
 	{
 		thread SpawnIntroBatch( TEAM_IMC )
