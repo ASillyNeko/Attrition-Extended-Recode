@@ -1067,8 +1067,8 @@ void function MonarchUpgrade( entity weapon )
 		{
 			if ( !GetDoomedState( owner ) )
 			{
-				owner.SetMaxHealth( owner.GetMaxHealth() + VANGUARD_CORE8_HEALTH_AMOUNT )
-				owner.SetHealth( owner.GetHealth() + VANGUARD_CORE8_HEALTH_AMOUNT )
+				owner.SetMaxHealth( max( MAX_HEALTH, owner.GetMaxHealth() + VANGUARD_CORE8_HEALTH_AMOUNT ) )
+				owner.SetHealth( max( owner.GetMaxHealth(), owner.GetHealth() + VANGUARD_CORE8_HEALTH_AMOUNT ) )
 			}
 
 			soul.SetPreventCrits( true )
@@ -2264,7 +2264,7 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
 
 		if ( GetCurrentPlaylistVarInt( "aegis_upgrades", 0 ) == 1 )
 		{
-			titan.SetMaxHealth( titan.GetMaxHealth() + 2500 )
+			titan.SetMaxHealth( max( MAX_HEALTH, titan.GetMaxHealth() + 2500 ) )
 			titan.SetHealth( titan.GetMaxHealth() )
 		}
 
