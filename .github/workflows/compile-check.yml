@@ -12,13 +12,13 @@ jobs:
 
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           path: NorthstarMod
           persist-credentials: false
 
       - name: Checkout Northstar Mods
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: R2Northstar/NorthstarMods
           ref: main
@@ -35,5 +35,5 @@ jobs:
         uses: ASpoonPlaysGames/squirrel-re-compiler@d1f094852c8d8e6fdf49b26b7b74f119bb5731a0 # v3.0.4
         with:
           mods-directory: "${{ github.workspace }}/mods"
-          native-json: "${{ github.workspace }}/NorthstarMod/.github/natives.json"
+          native-json: "${{ github.workspace }}/mods/.github/natives.json"
           vanilla: false
