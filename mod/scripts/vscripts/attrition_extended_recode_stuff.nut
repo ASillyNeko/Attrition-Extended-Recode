@@ -45,9 +45,7 @@ struct
 	table<entity, bool> autoEject
 
 	table<entity, array<string> > weapons
-	table<entity, asset> model
 	table<entity, string> grenade
-	table<entity, bool> pilotedTitan
 
 	table<entity, int> smokeCount
 
@@ -301,8 +299,10 @@ int function AttritionExtendedRecode_SpawnedUnPilotedTitans( int team )
 
 asset function AttritionExtendedRecode_GetTitanModel( entity titan )
 {
-	if ( titan in file.model )
-		return file.model[ titan ]
+	entity titanSoul = titan.GetTitanSoul()
+
+	if ( IsValid( titanSoul ) )
+		return titanSoul.soul.seatedNpcPilot.modelAsset
 
 	return file.pilotModels.getrandom()
 }
@@ -334,10 +334,15 @@ AttritionExtendedRecode_CustomTitanStruct function AttritionExtendedRecode_Custo
 
 bool function AttritionExtendedRecode_TitanHasNpcPilot( entity titan )
 {
-	if ( !titan.IsTitan() || !( titan in file.pilotedTitan && file.pilotedTitan[ titan ] ) )
+	if ( !titan.IsTitan() )
 		return false
 
-	return true
+	entity titanSoul = titan.GetTitanSoul()
+
+	if ( !IsValid( titanSoul ) )
+		return false
+
+	return titanSoul.soul.seatedNpcPilot.isValid
 }
 
 void function PilotTitanExecution( entity ent, var damageInfo )
@@ -356,7 +361,7 @@ void function PilotTitanExecution_thread( entity ent, var damageInfo )
 	entity soul = ent.GetTitanSoul()
 
 	if (
-		attacker.IsNPC() && attacker.IsTitan() && IsValid( soul ) && ( damageType & DF_MELEE ) && attacker in file.pilotedTitan && file.pilotedTitan[ attacker ] &&
+		attacker.IsNPC() && attacker.IsTitan() && IsValid( soul ) && damageType & DF_MELEE && AttritionExtendedRecode_TitanHasNpcPilot( attacker ) &&
 		CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && GetDoomedState( ent ) && !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) &&
 		!ent.IsPhaseShifted() && CanSurviveDamage( ent, damageInfo )
 	)
@@ -415,7 +420,7 @@ void function PilotExecution_thread( entity ent, var damageInfo )
 		return
 
 	if (
-		attacker.IsNPC() && Is_AttritionExtendedRecode_Entity( attacker ) && ( damageType & DF_MELEE ) && CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) &&
+		attacker.IsNPC() && Is_AttritionExtendedRecode_Entity( attacker ) && damageType & DF_MELEE && CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) &&
 		!ent.Anim_IsActive() && !( ( ent.IsPlayer() && PlayerCanSee( ent, attacker, true, 75 ) ) || ( ent.IsNPC() && ent.CanSee( attacker ) ) )
 	)
 	{
@@ -430,7 +435,7 @@ void function NPCNoPain( entity npc, var damageInfo )
 	{
 		if ( !npc.IsTitan() )
 			DamageInfo_AddDamageFlags( damageInfo, DAMAGEFLAG_NOPAIN )
-		else if ( npc.IsTitan() && npc in file.pilotedTitan && file.pilotedTitan[ npc ] )
+		else if ( npc.IsTitan() && AttritionExtendedRecode_TitanHasNpcPilot( npc ) )
 			DamageInfo_AddDamageFlags( damageInfo, DAMAGEFLAG_NOPAIN )
 	}
 }
@@ -443,7 +448,7 @@ void function ApplyNormalMeleeIdToNPCTitan( entity victim, var damageInfo )
 	if ( !IsValid( attacker ) || !attacker.IsNPC() || !attacker.IsTitan() )
 		return
 
-	if ( attacker in file.pilotedTitan && file.pilotedTitan[ attacker ] )
+	if ( AttritionExtendedRecode_TitanHasNpcPilot( attacker ) )
 	{
 		if ( GetTitanCharacterName( attacker ) == "ronin" )
 		{
@@ -480,7 +485,7 @@ void function PilotTitanAutoOrDeathEjectHandle( entity titan, var damageInfo )
 
 	if (
 		!IsValid( soul ) || soul.IsEjecting() ||
-		!( titan in file.pilotedTitan && file.pilotedTitan[ titan ] && titan in file.autoEject && file.autoEject[ titan ] && GetDoomedState( titan ) )
+		!( titan in AttritionExtendedRecode_TitanHasNpcPilot( titan ) && titan in file.autoEject && file.autoEject[ titan ] && GetDoomedState( titan ) )
 	)
 		return
 
@@ -547,7 +552,7 @@ void function EjectWhenDoomed( entity titan, var damageInfo )
 				shouldEjectTitan = true
 		}
 
-		if ( titan in file.pilotedTitan && file.pilotedTitan[ titan ] && ( ( shouldEjectTitan && !titan.IsInvulnerable() ) || autoEject ) )
+		if ( AttritionExtendedRecode_TitanHasNpcPilot( titan ) && ( ( shouldEjectTitan && !titan.IsInvulnerable() ) || autoEject ) )
 			thread TitanEjectPlayerForNPCs( titan, autoEject )
 	}
 }
@@ -590,17 +595,14 @@ entity function AttritionExtendedRecode_NpcTitanBecomesPilot( entity titan )
 	if ( !IsValid( titanSoul ) )
 		return null
 
-	file.pilotedTitan[ titan ] <- false
+	titanSoul.soul.seatedNpcPilot.isValid = false
 
 	array<string> weapons = []
-	asset model = $""
+	asset model = titanSoul.soul.seatedNpcPilot.modelAsset
 	string grenade = ""
 
 	if ( titan in file.weapons )
 		weapons = file.weapons[ titan ]
-
-	if ( titan in file.model )
-		model = file.model[ titan ]
 
 	if ( titan in file.grenade )
 		grenade = file.grenade[ titan ]
@@ -681,12 +683,12 @@ void function OnFlagChanged( entity npc, array<int> flags, bool disable = false,
 			{
 				if ( isvalidpilot )
 				{
-					if ( !( npc in file.pilotedTitan && file.pilotedTitan[ npc ] ) )
+					if ( !( AttritionExtendedRecode_TitanHasNpcPilot( npc ) ) )
 						return
 				}
 				else
 				{
-					if ( npc in file.pilotedTitan && file.pilotedTitan[ npc ] )
+					if ( AttritionExtendedRecode_TitanHasNpcPilot( npc ) )
 						return
 				}
 			}
@@ -872,7 +874,7 @@ void function MonitorMonarchShield( entity npc )
 	if ( !IsValid( soul ) )
 		return
 
-	if ( !( npc in file.pilotedTitan && file.pilotedTitan[ npc ] ) )
+	if ( !AttritionExtendedRecode_TitanHasNpcPilot( npc ) )
 		return
 
 	npc.EndSignal( "OnDestroy" )
@@ -885,12 +887,12 @@ void function MonitorMonarchShield( entity npc )
 	{
 		WaitFrame()
 
-		if ( !( npc in file.pilotedTitan && file.pilotedTitan[ npc ] ) )
+		if ( !AttritionExtendedRecode_TitanHasNpcPilot( npc ) )
 			return
 
 		WaitTillTitanCoreCharge( npc )
 
-		if ( !( npc in file.pilotedTitan && file.pilotedTitan[ npc ] ) )
+		if ( !AttritionExtendedRecode_TitanHasNpcPilot( npc ) )
 			return
 
 		if ( soul.GetTitanSoulNetInt( "upgradeCount" ) > 2 && soul.GetShieldHealth() > soul.GetShieldHealthMax() * 0.1 )
@@ -1268,7 +1270,7 @@ void function EmbarkedNPCTitanRodeoCounter_Threaded( entity titan )
 	{
 		WaitFrame()
 
-		if ( !( titan in file.pilotedTitan && file.pilotedTitan[ titan ] ) )
+		if ( !AttritionExtendedRecode_TitanHasNpcPilot( titan ) )
 			return
 
 		entity rodeoPilot = GetRodeoPilot( titan )
@@ -1951,13 +1953,18 @@ void function AttritionExtendedRecode_NpcPilotBecomesTitan( entity pilot, entity
 
 	entity titanSoul = titan.GetTitanSoul()
 
-	file.pilotedTitan[ titan ] <- true
+	if ( !IsValid( titanSoul ) )
+		return
+
+	titanSoul.soul.seatedNpcPilot.isValid = true
+	titanSoul.soul.seatedNpcPilot.modelAsset = pilot.GetModelName()
 	file.weapons[ titan ] <- weaponNames
-	file.model[ titan ] <- pilot.GetModelName()
 	file.grenade[ titan ] <- expect string( pilot.kv.grenadeWeaponName )
 
 	if ( titan in file.CustomTitanUID && file.CustomTitanUID[ titan ] >= 0 )
+	{
 		titan.SetTitle( pilot.GetTitle() )
+	}
 	else
 	{
 		switch ( GetTitanCharacterName( titan ) )
