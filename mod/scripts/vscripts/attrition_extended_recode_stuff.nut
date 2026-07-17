@@ -1068,7 +1068,7 @@ void function MonarchUpgrade( entity weapon )
 		{
 			if ( !GetDoomedState( owner ) )
 			{
-				owner.SetMaxHealth( min( MAX_HEALTH, owner.GetMaxHealth() + VANGUARD_CORE8_HEALTH_AMOUNT ) )
+				owner.SetMaxHealth( min( MAX_HEALTH - 1, owner.GetMaxHealth() + VANGUARD_CORE8_HEALTH_AMOUNT ) )
 				owner.SetHealth( min( owner.GetMaxHealth(), owner.GetHealth() + VANGUARD_CORE8_HEALTH_AMOUNT ) )
 			}
 
@@ -1574,7 +1574,7 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 
 		if ( CustomTitan.HP > 0 )
 		{
-			titan.SetMaxHealth( min( MAX_HEALTH, CustomTitan.HP ) )
+			titan.SetMaxHealth( min( MAX_HEALTH - 1, CustomTitan.HP ) )
 			titan.SetHealth( titan.GetMaxHealth() )
 		}
 	}
@@ -1865,7 +1865,7 @@ entity function AttritionExtendedRecode_NpcPilotCallsInTitan( entity pilot, vect
 
 		if ( CustomTitan.HP > 0 )
 		{
-			titan.SetMaxHealth( min( MAX_HEALTH, CustomTitan.HP ) )
+			titan.SetMaxHealth( min( MAX_HEALTH - 1, CustomTitan.HP ) )
 			titan.SetHealth( titan.GetMaxHealth() )
 		}
 	}
@@ -2270,7 +2270,7 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
 
 		if ( GetCurrentPlaylistVarInt( "aegis_upgrades", 0 ) == 1 )
 		{
-			titan.SetMaxHealth( min( MAX_HEALTH, titan.GetMaxHealth() + 2500 ) )
+			titan.SetMaxHealth( min( MAX_HEALTH - 1, titan.GetMaxHealth() + 2500 ) )
 			titan.SetHealth( titan.GetMaxHealth() )
 		}
 
