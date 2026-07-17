@@ -347,11 +347,6 @@ bool function AttritionExtendedRecode_TitanHasNpcPilot( entity titan )
 
 void function PilotTitanExecution( entity ent, var damageInfo )
 {
-	thread PilotTitanExecution_thread( ent, damageInfo )
-}
-
-void function PilotTitanExecution_thread( entity ent, var damageInfo )
-{
 	int damageType = DamageInfo_GetCustomDamageType( damageInfo )
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 
@@ -362,13 +357,13 @@ void function PilotTitanExecution_thread( entity ent, var damageInfo )
 
 	if (
 		attacker.IsNPC() && attacker.IsTitan() && IsValid( soul ) && damageType & DF_MELEE && AttritionExtendedRecode_TitanHasNpcPilot( attacker ) &&
-		CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && GetDoomedState( ent ) && !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) &&
-		!ent.IsPhaseShifted() && CanSurviveDamage( ent, damageInfo )
+		CodeCallback_IsValidMeleeExecutionTarget( attacker, ent ) && !SoulHasPassive( soul, ePassives.PAS_AUTO_EJECT ) && !ent.IsPhaseShifted() &&
+		CanSurviveDamage( ent, damageInfo )
 	)
 	{
 		PilotTitanExecution_DamageEnemy( ent, damageInfo )
 		DamageInfo_SetDamage( damageInfo, 0 )
-		waitthread PlayerTriesSyncedMelee( attacker, ent )
+		thread PlayerTriesSyncedMelee( attacker, ent )
 	}
 }
 
@@ -408,11 +403,6 @@ void function PilotTitanExecution_DamageEnemy( entity ent, var damageInfo )
 
 void function PilotExecution( entity ent, var damageInfo )
 {
-	thread PilotExecution_thread( ent, damageInfo )
-}
-
-void function PilotExecution_thread( entity ent, var damageInfo )
-{
 	int damageType = DamageInfo_GetCustomDamageType( damageInfo )
 	entity attacker = DamageInfo_GetAttacker( damageInfo )
 
@@ -425,7 +415,7 @@ void function PilotExecution_thread( entity ent, var damageInfo )
 	)
 	{
 		DamageInfo_SetDamage( damageInfo, 0 )
-		waitthread PlayerTriesSyncedMelee( attacker, ent )
+		thread PlayerTriesSyncedMelee( attacker, ent )
 	}
 }
 
