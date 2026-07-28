@@ -84,6 +84,7 @@ struct
 		$"models/humans/pilots/pilot_medium_reaper_m.mdl",
 		$"models/humans/pilots/pilot_medium_reaper_f.mdl"
 	]
+
 	array<string> pilotGrenades = [
 		"mp_weapon_frag_grenade",
 		"mp_weapon_grenade_electric_smoke",
@@ -106,15 +107,93 @@ void function AttritionExtendedRecode_Init()
 
 	if ( GAMETYPE == "aitdm" )
 	{
-		AITdm_SetSquadsPerTeam( GetCurrentPlaylistVarInt( "squad_count", 4 ) )
-		AITdm_SetSpectresPerTeam( GetCurrentPlaylistVarInt( "spectre_count", 12 ) )
-		AITdm_SetReapersPerTeam( GetCurrentPlaylistVarInt( "reaper_count", 2 ) )
-		AITdm_SetLevelSpectres( GetCurrentPlaylistVarInt( "spectre_spawn_score", 125 ) )
-		AITdm_SetLevelStalkers( GetCurrentPlaylistVarInt( "stalker_spawn_score", 380 ) )
-		AITdm_SetLevelReapers( GetCurrentPlaylistVarInt( "reaper_spawn_score", 500 ) )
+		GM_AddPlayingThinkFunc(
+			void function() : ()
+			{
+				thread DefconHandle()
+			}
+		)
+
+		AITdm_SetDefcon_1( GetCurrentPlaylistVarInt( "defcon_1_score", 125 ) )
+		AITdm_SetDefcon_2( GetCurrentPlaylistVarInt( "defcon_2_score", 250 ) )
+		AITdm_SetDefcon_3( GetCurrentPlaylistVarInt( "defcon_3_score", 330 ) )
+		AITdm_SetDefcon_4( GetCurrentPlaylistVarInt( "defcon_4_score", 500 ) )
+		AITdm_SetDefcon_5( GetCurrentPlaylistVarInt( "defcon_5_score", 575 ) )
 		AddCallback_GameStateEnter( eGameState.Playing, OnPlaying )
 		AddDeathCallback( "npc_pilot_elite", AddEnemyTeamScore )
 		AddDeathCallback( "npc_titan", AddEnemyTeamScore )
+	}
+}
+
+void function DefconHandle()
+{
+	foreach ( int team in [ TEAM_IMC, TEAM_MILITIA ] )
+	{
+		string defcon = team == TEAM_MILITIA ? "IMCdefcon" : "MILdefcon"
+		int currentDefCon = GetGlobalNetInt( defcon )
+
+		switch ( currentDefCon )
+		{
+			case 0:
+				level.spectreSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_0_spectre_spawn_chance", 0 )
+				level.stalkerSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_0_stalker_spawn_chance", 0 )
+				level.reaperSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_0_reaper_spawn_chance", 0 )
+				level.maxSpectrePerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_0_spectres", 0 )
+				level.maxStalkersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_0_stalkers", 0 )
+				level.maxReapersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_0_reapers", 0 )
+				level.modifyAISlots[ team ] = GetCurrentPlaylistVarInt( "defcon_0_additional_ai_slots", 0 )
+				break
+
+			case 1:
+				level.spectreSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_1_spectre_spawn_chance", 10 )
+				level.stalkerSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_1_stalker_spawn_chance", 0 )
+				level.reaperSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_1_reaper_spawn_chance", 0 )
+				level.maxSpectrePerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_1_spectres", 4 )
+				level.maxStalkersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_1_stalkers", 0 )
+				level.maxReapersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_1_reapers", 0 )
+				level.modifyAISlots[ team ] = GetCurrentPlaylistVarInt( "defcon_1_additional_ai_slots", 0 )
+				break
+
+			case 2:
+				level.spectreSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_2_spectre_spawn_chance", 15 )
+				level.stalkerSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_2_stalker_spawn_chance", 0 )
+				level.reaperSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_2_reaper_spawn_chance", 0 )
+				level.maxSpectrePerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_2_spectres", 12 )
+				level.maxStalkersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_2_stalkers", 0 )
+				level.maxReapersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_2_reapers", 0 )
+				level.modifyAISlots[ team ] = GetCurrentPlaylistVarInt( "defcon_2_additional_ai_slots", 0 )
+				break
+
+			case 3:
+				level.spectreSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_3_spectre_spawn_chance", 15 )
+				level.stalkerSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_3_stalker_spawn_chance", 10 )
+				level.reaperSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_3_reaper_spawn_chance", 0 )
+				level.maxSpectrePerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_3_spectres", 12 )
+				level.maxStalkersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_3_stalkers", 4 )
+				level.maxReapersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_3_reapers", 0 )
+				level.modifyAISlots[ team ] = GetCurrentPlaylistVarInt( "defcon_3_additional_ai_slots", 0 )
+				break
+
+			case 4:
+				level.spectreSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_4_spectre_spawn_chance", 15 )
+				level.stalkerSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_4_stalker_spawn_chance", 10 )
+				level.reaperSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_4_reaper_spawn_chance", 100 )
+				level.maxSpectrePerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_4_spectres", 12 )
+				level.maxStalkersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_4_stalkers", 4 )
+				level.maxReapersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_4_reapers", 2 )
+				level.modifyAISlots[ team ] = GetCurrentPlaylistVarInt( "defcon_4_additional_ai_slots", 2 )
+				break
+
+			case 5:
+				level.spectreSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_5_spectre_spawn_chance", 15 )
+				level.stalkerSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_5_stalker_spawn_chance", 10 )
+				level.reaperSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_5_reaper_spawn_chance", 100 )
+				level.maxSpectrePerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_5_spectres", 12 )
+				level.maxStalkersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_5_stalkers", 4 )
+				level.maxReapersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_5_reapers", 3 )
+				level.modifyAISlots[ team ] = GetCurrentPlaylistVarInt( "defcon_5_additional_ai_slots", 3 )
+				break
+		}
 	}
 }
 
