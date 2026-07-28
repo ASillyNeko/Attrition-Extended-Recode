@@ -5,7 +5,6 @@ global function AttritionExtendedRecode_SpawnPilotWithTitan
 global function AttritionExtendedRecode_SpawnTitan
 global function AttritionExtendedRecode_SpawnedPilotedTitans
 global function AttritionExtendedRecode_SpawnedUnPilotedTitans
-global function AttritionExtendedRecode_GetTitanModel
 global function Is_AttritionExtendedRecode_Entity
 global function AttritionExtendedRecode_AddCustomTitan
 
@@ -199,85 +198,25 @@ void function DefconHandle()
 
 void function OnPlaying()
 {
-	if ( NavMesh_IsUpToDate() && GetAINScriptVersion() == AIN_REV && GetNodeCount() )
-	{
-		thread SpawnIntroBatch( TEAM_IMC )
-		delaythread( 0.0001 ) SpawnIntroBatch( TEAM_MILITIA )
-	}
-}
-
-void function SpawnIntroBatch( int team )
-{
-	int spawnedPiloted = 0
-	int spawnedUnpiloted = 0
-	int pilotedTitansToSpawn = 0
-	int unpilotedTitansToSpawn = 0
-	int currentPilotedTitanScore = GameRules_GetTeamScore( GetOtherTeam( team ) )
-	int currentUnpilotedTitanScore = GameRules_GetTeamScore( GetOtherTeam( team ) )
-
-	while (
-		currentPilotedTitanScore >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) &&
-		pilotedTitansToSpawn < GetCurrentPlaylistVarInt( "piloted_titan_count", 3 )
-	)
-	{
-		currentPilotedTitanScore -= GetCurrentPlaylistVarInt( "piloted_titan_ramp_up_score", 150 )
-		pilotedTitansToSpawn++
-	}
-
-	while (
-		currentUnpilotedTitanScore >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) &&
-		unpilotedTitansToSpawn < GetCurrentPlaylistVarInt( "unpiloted_titan_count", 0 )
-	)
-	{
-		currentUnpilotedTitanScore -= GetCurrentPlaylistVarInt( "unpiloted_titan_ramp_up_score", 150 )
-		unpilotedTitansToSpawn++
-	}
-
-	while ( spawnedPiloted < pilotedTitansToSpawn || spawnedUnpiloted < unpilotedTitansToSpawn )
-	{
-		if ( spawnedPiloted < pilotedTitansToSpawn )
-		{
-			AttritionExtendedRecode_SpawnPilotWithTitan( team, true )
-
-			spawnedPiloted++
-
-			wait RandomFloatRange( 0.5, 1 )
-		}
-
-		if ( spawnedUnpiloted < unpilotedTitansToSpawn )
-		{
-			AttritionExtendedRecode_SpawnTitan( team, false, true )
-
-			spawnedUnpiloted++
-
-			wait RandomFloatRange( 0.5, 1 )
-		}
-	}
-
-	/*
-	if ( spawnedPiloted || spawnedUnpiloted )
-	{
-		wait 2.5
-
-		if ( Flag( "LevelHasRoof" ) )
-			wait WARPFALL_SOUND_DELAY + 2.5 + WARPFALL_FX_DELAY
-	}
-*/
-
-	delaythread( 15 ) Spawner( team )
+	thread Spawner( TEAM_IMC )
+	thread Spawner( TEAM_MILITIA )
 }
 
 void function Spawner( int team )
 {
 	while ( IsAutoPopulateEnabled( team ) )
 	{
+		bool inGracePeriod = GameTime_PlayingTime() < START_SPAWN_GRACE_PERIOD
+		bool inGameState = GetGameState() <= eGameState.Prematch || GetGameState() == eGameState.SwitchingSides
+		bool useStartSpawn = inGameState || inGracePeriod
+
 		int pilotedTitansToSpawn = 0
 		int unpilotedTitansToSpawn = 0
 		int currentPilotedTitanScore = GameRules_GetTeamScore( GetOtherTeam( team ) )
 		int currentUnpilotedTitanScore = GameRules_GetTeamScore( GetOtherTeam( team ) )
 
 		while (
-			currentPilotedTitanScore >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) &&
+			currentPilotedTitanScore >= GetCurrentPlaylistVarInt( "titan_spawn_score", 650 ) &&
 			pilotedTitansToSpawn < GetCurrentPlaylistVarInt( "piloted_titan_count", 3 )
 		)
 		{
@@ -286,7 +225,7 @@ void function Spawner( int team )
 		}
 
 		while (
-			currentUnpilotedTitanScore >= GetCurrentPlaylistVarInt( "titan_spawn_score", 500 ) &&
+			currentUnpilotedTitanScore >= GetCurrentPlaylistVarInt( "titan_spawn_score", 650 ) &&
 			unpilotedTitansToSpawn < GetCurrentPlaylistVarInt( "unpiloted_titan_count", 0 )
 		)
 		{
@@ -296,7 +235,7 @@ void function Spawner( int team )
 
 		if ( AttritionExtendedRecode_SpawnedPilotedTitans( team ) < pilotedTitansToSpawn )
 		{
-			AttritionExtendedRecode_SpawnPilotWithTitan( team )
+			AttritionExtendedRecode_SpawnPilotWithTitan( team, useStartSpawn )
 
 			wait RandomFloatRange( 2.5, 3 )
 
@@ -306,7 +245,7 @@ void function Spawner( int team )
 
 		if ( AttritionExtendedRecode_SpawnedUnPilotedTitans( team ) < unpilotedTitansToSpawn )
 		{
-			AttritionExtendedRecode_SpawnTitan( team )
+			AttritionExtendedRecode_SpawnTitan( team, false, useStartSpawn )
 
 			wait RandomFloatRange( 2.5, 3 )
 
@@ -373,16 +312,6 @@ int function AttritionExtendedRecode_SpawnedUnPilotedTitans( int team )
 	}
 
 	return 0
-}
-
-asset function AttritionExtendedRecode_GetTitanModel( entity titan )
-{
-	entity titanSoul = titan.GetTitanSoul()
-
-	if ( IsValid( titanSoul ) )
-		return titanSoul.soul.seatedNpcPilot.modelAsset
-
-	return file.pilotModels.getrandom()
 }
 
 bool function Is_AttritionExtendedRecode_Entity( entity guy )
@@ -794,62 +723,65 @@ void function PilotSpeedFlagsHPAndBehavior( entity npc )
 
 void function PilotMiniMap( entity npc )
 {
-	thread pilotminimaponpilotdeath( npc, createpilotminimap( npc ) )
+	thread DestroyPilotMiniMapOnPilotDeath( npc, CreatePilotMinimap( npc ) )
 }
 
-entity function createpilotminimap( entity npc )
+entity function CreatePilotMinimap( entity npc )
 {
-	entity pilotminimap = CreateEntity( "npc_spectre" )
+	entity pilotMiniMap = CreateEntity( "npc_spectre" )
 
-	DispatchSpawn( pilotminimap )
+	DispatchSpawn( pilotMiniMap )
 
-	file.isAttritionExtendedRecodeEntity[ pilotminimap ] <- true
+	file.isAttritionExtendedRecodeEntity[ pilotMiniMap ] <- true
 
-	TakeWeaponsForArray( pilotminimap, pilotminimap.GetMainWeapons() )
+	TakeWeaponsForArray( pilotMiniMap, pilotMiniMap.GetMainWeapons() )
 
-	pilotminimap.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
-	pilotminimap.Hide()
+	pilotMiniMap.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
+	pilotMiniMap.Hide()
 
-	HideName( pilotminimap )
+	HideName( pilotMiniMap )
 
-	pilotminimap.SetParent( npc, "HEADFOCUS" )
-	pilotminimap.NotSolid()
-	pilotminimap.kv.CollisionGroup = 0
-	pilotminimap.SetInvulnerable()
+	pilotMiniMap.SetParent( npc, "HEADFOCUS" )
+	pilotMiniMap.NotSolid()
+	pilotMiniMap.kv.CollisionGroup = 0
+	pilotMiniMap.SetInvulnerable()
 
-	SetTeam( pilotminimap, npc.GetTeam() )
-	NPC_NoTarget( pilotminimap )
+	SetTeam( pilotMiniMap, npc.GetTeam() )
+	NPC_NoTarget( pilotMiniMap )
 
-	pilotminimap.EnableNPCFlag( NPC_IGNORE_ALL )
-	pilotminimap.StopPhysics()
-	pilotminimap.Freeze()
-	pilotminimap.SetModel( $"models/dev/empty_model.mdl" )
+	pilotMiniMap.EnableNPCFlag( NPC_IGNORE_ALL )
+	pilotMiniMap.StopPhysics()
+	pilotMiniMap.Freeze()
+	pilotMiniMap.SetModel( $"models/dev/empty_model.mdl" )
 
-	return pilotminimap
+	pilotMiniMap.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	pilotMiniMap.Minimap_AlwaysShow( TEAM_IMC, null )
+
+	return pilotMiniMap
 }
 
-void function pilotminimaponpilotdeath( entity npc, entity pilotminimap )
+void function DestroyPilotMiniMapOnPilotDeath( entity npc, entity pilotMiniMap )
 {
 	npc.EndSignal( "OnDestroy" )
 	npc.EndSignal( "OnDeath" )
 
 	OnThreadEnd(
-		function() : ( pilotminimap )
+		function() : ( pilotMiniMap )
 		{
-			if ( IsValid( pilotminimap ) )
-				pilotminimap.Destroy()
+			if ( IsValid( pilotMiniMap ) )
+				pilotMiniMap.Destroy()
 		}
 	)
 
 	while ( true )
 	{
-		if ( IsValid( pilotminimap ) )
+		if ( IsValid( pilotMiniMap ) )
 		{
-			if ( npc.GetTeam() != pilotminimap.GetTeam() )
-				SetTeam( pilotminimap, npc.GetTeam() )
+			if ( npc.GetTeam() != pilotMiniMap.GetTeam() )
+				SetTeam( pilotMiniMap, npc.GetTeam() )
 		}
 		else
-			pilotminimap = createpilotminimap( npc )
+			pilotMiniMap = CreatePilotMinimap( npc )
 
 		WaitFrame()
 	}
@@ -1461,15 +1393,15 @@ void function TitanSmokescreen( entity ent )
 	Smokescreen( smokescreen )
 }
 
-void function AttritionExtendedRecode_SpawnPilotWithTitan( int team, bool introspawnpoints = false )
+void function AttritionExtendedRecode_SpawnPilotWithTitan( int team, bool introSpawnPoints = false )
 {
 	if ( !IsNewThread() )
 	{
-		thread AttritionExtendedRecode_SpawnPilotWithTitan( team, introspawnpoints )
+		thread AttritionExtendedRecode_SpawnPilotWithTitan( team, introSpawnPoints )
 		return
 	}
 
-	entity spawnpoint = GetSpawnpoint( team, introspawnpoints )
+	entity spawnpoint = GetSpawnpoint( team, introSpawnPoints )
 
 	if ( !IsValid( spawnpoint ) )
 		return
@@ -1511,11 +1443,7 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team, bool intros
 	pilot.SetInvulnerable()
 	pilot.kv.contents = ( int( pilot.kv.contents ) | CONTENTS_NOGRAPPLE )
 	pilot.EnableNPCFlag( NPC_IGNORE_ALL )
-
-	bool disabletraverse = pilot.GetCapabilityFlag( bits_CAP_MOVE_TRAVERSE )
-
-	if ( disabletraverse )
-		pilot.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, false )
+	pilot.Freeze()
 
 	NPC_NoTarget( pilot )
 
@@ -1524,12 +1452,15 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team, bool intros
 	else
 		pilot.SetTitle( "Pilot" )
 
-	thread AttritionExtendedRecode_NpcPilotCallsInAndEmbarksTitan( pilot, pos, angles, CustomTitan, introspawnpoints )
+	thread AttritionExtendedRecode_NpcPilotCallsInAndEmbarksTitan( pilot, pos, angles, CustomTitan )
 	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, angles )
 
 	if ( IsValid( pilot ) )
 	{
 		pilot.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
+		pilot.Unfreeze()
+		pilot.SetOrigin( pod.GetOrigin() )
+		pilot.SetAngles( pod.GetAngles() )
 
 		thread PilotMiniMap( pilot )
 	}
@@ -1539,22 +1470,17 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team, bool intros
 
 	if ( IsValid( spawnpoint ) )
 		ToggleSpawnNodeInUse( spawnpoint, false )
-
-	WaitEndFrame()
-
-	if ( disabletraverse && IsValid( pilot ) )
-		pilot.SetCapabilityFlag( bits_CAP_MOVE_TRAVERSE, true )
 }
 
-void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = false, bool introspawnpoints = false )
+void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = false, bool introSpawnPoints = false )
 {
 	if ( !IsNewThread() )
 	{
-		thread AttritionExtendedRecode_SpawnTitan( team, withpilot, introspawnpoints )
+		thread AttritionExtendedRecode_SpawnTitan( team, withpilot, introSpawnPoints )
 		return
 	}
 
-	entity spawnpoint = GetSpawnpoint( team, introspawnpoints )
+	entity spawnpoint = GetSpawnpoint( team, introSpawnPoints )
 
 	if ( !IsValid( spawnpoint ) )
 		return
@@ -1638,6 +1564,9 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 	else
 		pilot.Destroy()
 
+	titan.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	titan.Minimap_AlwaysShow( TEAM_IMC, null )
+
 	if ( ( !withpilot && CustomTitan.AllowedWithoutPilot ) || ( withpilot && CustomTitan.AllowedWithPilot ) )
 	{
 		titan.SetTitle( "[CT] " + CustomTitan.Title )
@@ -1696,11 +1625,11 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 		ToggleSpawnNodeInUse( spawnpoint, false )
 }
 
-entity function GetSpawnpoint( int team, bool introspawnpoints )
+entity function GetSpawnpoint( int team, bool introSpawnPoints )
 {
 	array<entity> points = SpawnPoints_GetTitan()
 
-	if ( introspawnpoints )
+	if ( introSpawnPoints )
 		points = NSSpawnPoints_GetTitanStart( team )
 
 	array<entity> spawns = points
@@ -1948,6 +1877,9 @@ entity function AttritionExtendedRecode_NpcPilotCallsInTitan( entity pilot, vect
 		titan.SetTitle( pilottitle + "'s Auto-Titan" )
 
 	file.isAttritionExtendedRecodeEntity[ titan ] <- true
+
+	titan.Minimap_AlwaysShow( TEAM_MILITIA, null )
+	titan.Minimap_AlwaysShow( TEAM_IMC, null )
 
 	if ( !usedomeshieldwarpfall )
 		thread NPCTitanHotdrops( titan, false )
@@ -2360,7 +2292,7 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
 	}
 }
 
-entity function AttritionExtendedRecode_NpcPilotCallsInAndEmbarksTitan( entity pilot, vector origin, vector angles, AttritionExtendedRecode_CustomTitanStruct CustomTitan, bool introspawnpoints )
+entity function AttritionExtendedRecode_NpcPilotCallsInAndEmbarksTitan( entity pilot, vector origin, vector angles, AttritionExtendedRecode_CustomTitanStruct CustomTitan )
 {
 	pilot.EndSignal( "OnDestroy" )
 	pilot.EndSignal( "OnDeath" )
