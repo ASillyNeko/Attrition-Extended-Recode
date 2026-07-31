@@ -147,14 +147,14 @@ void function DefconHandle()
 				level.spectreSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_1_spectre_spawn_chance", 10 )
 				level.stalkerSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_1_stalker_spawn_chance", 0 )
 				level.reaperSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_1_reaper_spawn_chance", 0 )
-				level.maxSpectrePerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_1_spectres", 4 )
+				level.maxSpectrePerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_1_spectres", 8 )
 				level.maxStalkersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_1_stalkers", 0 )
 				level.maxReapersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_1_reapers", 0 )
 				level.modifyAISlots[ team ] = GetCurrentPlaylistVarInt( "defcon_1_additional_ai_slots", 0 )
 				break
 
 			case 2:
-				level.spectreSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_2_spectre_spawn_chance", 15 )
+				level.spectreSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_2_spectre_spawn_chance", 20 )
 				level.stalkerSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_2_stalker_spawn_chance", 0 )
 				level.reaperSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_2_reaper_spawn_chance", 0 )
 				level.maxSpectrePerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_2_spectres", 12 )
@@ -164,11 +164,11 @@ void function DefconHandle()
 				break
 
 			case 3:
-				level.spectreSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_3_spectre_spawn_chance", 15 )
+				level.spectreSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_3_spectre_spawn_chance", 20 )
 				level.stalkerSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_3_stalker_spawn_chance", 10 )
 				level.reaperSpawnChance[ team ] = GetCurrentPlaylistVarInt( "defcon_3_reaper_spawn_chance", 0 )
 				level.maxSpectrePerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_3_spectres", 12 )
-				level.maxStalkersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_3_stalkers", 4 )
+				level.maxStalkersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_3_stalkers", 8 )
 				level.maxReapersPerSide[ team ] = GetCurrentPlaylistVarInt( "defcon_3_reapers", 0 )
 				level.modifyAISlots[ team ] = GetCurrentPlaylistVarInt( "defcon_3_additional_ai_slots", 0 )
 				break
