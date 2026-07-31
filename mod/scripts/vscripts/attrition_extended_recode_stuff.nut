@@ -12,29 +12,15 @@ global struct AttritionExtendedRecode_CustomTitanStruct
 {
 	string Title = "Pilot"
 	string TitanSetFile = ""
-	string TitanAiSet = ""
-	string TitanBehavior = ""
-	string EmbarkedTitanAiSet = ""
-	string EmbarkedTitanBehavior = ""
-	string TitanExecutionRef = ""
 	int Camo = -1
 	int Skin = -1
 	bool AllowedWithPilot = true
 	bool AllowedWithoutPilot = true
-	string Melee = ""
-	array<string> MeleeMods = []
-	string Weapon = ""
-	array<string> WeaponMods = []
-	string Ordnance = ""
-	array<string> OrdnanceMods = []
-	string Utility = ""
-	array<string> UtilityMods = []
-	string Tactical = ""
-	array<string> TacticalMods = []
-	string Core = ""
-	array<string> CoreMods = []
-	array<int> Passives = []
 	int HP = -1
+	void functionref( entity ) BeforeSpawn = null
+	void functionref( entity ) AfterSpawn = null
+	void functionref( entity ) DisembarkTitan = null
+	void functionref( entity ) EmbarkTitan = null
 	int UID = -1
 }
 
@@ -1093,17 +1079,9 @@ void function PilotInTitanSet( entity titan )
 		if ( titan in file.CustomTitanUID && file.CustomTitanUID[ titan ] >= 0 && file.CustomTitans.len() >= file.CustomTitanUID[ titan ] )
 		{
 			AttritionExtendedRecode_CustomTitanStruct CustomTitan = clone file.CustomTitans[ file.CustomTitanUID[ titan ] ]
-			if ( CustomTitan.EmbarkedTitanAiSet != "" )
-				titan.SetAISettings( CustomTitan.EmbarkedTitanAiSet )
 
-			if ( CustomTitan.EmbarkedTitanBehavior != "" )
-				titan.SetBehaviorSelector( CustomTitan.EmbarkedTitanBehavior )
-
-			if ( CustomTitan.Weapon == "mp_titanweapon_predator_cannon" )
-				titan.SetNPCMoveSpeedScale( 1.25 )
-
-			if ( CustomTitan.Core == "mp_titancore_upgrade" )
-				thread MonitorMonarchShield( titan )
+			if ( CustomTitan.EmbarkTitan != null )
+				CustomTitan.EmbarkTitan( titan )
 		}
 		else
 		{
@@ -1157,24 +1135,18 @@ void function PilotInTitanSet( entity titan )
 	}
 }
 
-void function PilotNotInTitanSet( entity titan, bool firsttime = false )
+void function PilotNotInTitanSet( entity titan, bool firstTime = false )
 {
 	if ( IsValid( titan ) )
 	{
-		if ( !firsttime )
+		if ( !firstTime )
 		{
 			if ( titan in file.CustomTitanUID && file.CustomTitanUID[ titan ] >= 0 && file.CustomTitans.len() >= file.CustomTitanUID[ titan ] )
 			{
 				AttritionExtendedRecode_CustomTitanStruct CustomTitan = clone file.CustomTitans[ file.CustomTitanUID[ titan ] ]
 
-				if ( CustomTitan.TitanAiSet != "" )
-					titan.SetAISettings( CustomTitan.TitanAiSet )
-
-				if ( CustomTitan.TitanBehavior != "" )
-					titan.SetBehaviorSelector( CustomTitan.TitanBehavior )
-
-				if ( CustomTitan.Weapon == "mp_titanweapon_predator_cannon" )
-					titan.SetNPCMoveSpeedScale( 1.0 )
+				if ( CustomTitan.DisembarkTitan != null )
+					CustomTitan.DisembarkTitan( titan )
 			}
 			else
 			{
@@ -1545,8 +1517,6 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 	if ( ( !withpilot && CustomTitan.AllowedWithoutPilot ) || ( withpilot && CustomTitan.AllowedWithPilot ) )
 	{
 		titan = CreateNPCTitan( CustomTitan.TitanSetFile, team, origin, angles )
-
-		SetSpawnOption_AISettings( titan, CustomTitan.EmbarkedTitanAiSet )
 	}
 	else
 	{
@@ -1554,6 +1524,9 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 
 		SetSpawnOption_AISettings( titan, titanSettings )
 	}
+
+	if ( CustomTitan.BeforeSpawn != null )
+		CustomTitan.BeforeSpawn( titan )
 
 	DispatchSpawn( titan )
 
@@ -1615,6 +1588,9 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 
 	SetStanceKneel( titan.GetTitanSoul() )
 	UpdateEnemyMemoryFromTeammates( titan )
+
+	if ( CustomTitan.AfterSpawn != null )
+		CustomTitan.AfterSpawn( titan )
 
 	if ( !usedomeshieldwarpfall )
 		NPCTitanHotdrops( titan, true )
@@ -1852,11 +1828,10 @@ entity function AttritionExtendedRecode_NpcPilotCallsInTitan( entity pilot, vect
 		SetSpawnOption_AISettings( titan, titanSettings )
 	}
 	else
-	{
 		titan = CreateNPCTitan( CustomTitan.TitanSetFile, team, origin, angles )
 
-		SetSpawnOption_AISettings( titan, CustomTitan.TitanAiSet )
-	}
+	if ( CustomTitan.BeforeSpawn != null )
+		CustomTitan.BeforeSpawn( titan )
 
 	DispatchSpawn( titan )
 
@@ -1906,6 +1881,9 @@ entity function AttritionExtendedRecode_NpcPilotCallsInTitan( entity pilot, vect
 	SetStanceKneel( titan.GetTitanSoul() )
 	UpdateEnemyMemoryFromTeammates( titan )
 	NPCFollowsNPCModded( titan, pilot )
+
+	if ( CustomTitan.AfterSpawn != null )
+		CustomTitan.AfterSpawn( titan )
 
 	return titan
 }
@@ -2023,138 +2001,7 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
 		titan.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
 		titan.TakeOffhandWeapon( OFFHAND_MELEE )
 
-		if ( titan in file.CustomTitanUID && CustomTitans.UID == file.CustomTitanUID[ titan ] )
-		{
-			if ( CustomTitans.Weapon != "" )
-			{
-				titan.GiveWeapon( CustomTitans.Weapon )
-
-				if ( CustomTitans.WeaponMods.len() )
-				{
-					entity weapon = titan.GetActiveWeapon()
-
-					if ( IsValid( weapon ) )
-					{
-						array<string> mods = weapon.GetMods()
-
-						mods.extend( CustomTitans.WeaponMods )
-
-						weapon.SetMods( mods )
-					}
-				}
-			}
-
-			if ( CustomTitans.Ordnance != "" )
-			{
-				titan.GiveOffhandWeapon( CustomTitans.Ordnance, OFFHAND_ORDNANCE )
-
-				if ( CustomTitans.OrdnanceMods.len() )
-				{
-					entity weapon = titan.GetOffhandWeapon( OFFHAND_ORDNANCE )
-
-					if ( IsValid( weapon ) )
-					{
-						array<string> mods = weapon.GetMods()
-
-						mods.extend( CustomTitans.OrdnanceMods )
-
-						weapon.SetMods( mods )
-					}
-				}
-			}
-
-			if ( CustomTitans.Utility != "" )
-			{
-				titan.GiveOffhandWeapon( CustomTitans.Utility, OFFHAND_EQUIPMENT )
-
-				if ( CustomTitans.UtilityMods.len() )
-				{
-					entity weapon = titan.GetOffhandWeapon( OFFHAND_EQUIPMENT )
-
-					if ( IsValid( weapon ) )
-					{
-						array<string> mods = weapon.GetMods()
-
-						mods.extend( CustomTitans.UtilityMods )
-
-						weapon.SetMods( mods )
-					}
-				}
-			}
-
-			if ( CustomTitans.Tactical != "" )
-			{
-				titan.GiveOffhandWeapon( CustomTitans.Tactical, OFFHAND_ANTIRODEO )
-
-				if ( CustomTitans.TacticalMods.len() )
-				{
-					entity weapon = titan.GetOffhandWeapon( OFFHAND_ANTIRODEO )
-
-					if ( IsValid( weapon ) )
-					{
-						array<string> mods = weapon.GetMods()
-
-						mods.extend( CustomTitans.TacticalMods )
-
-						weapon.SetMods( mods )
-					}
-				}
-			}
-
-			if ( CustomTitans.Core != "" )
-			{
-				titan.GiveOffhandWeapon( CustomTitans.Core, OFFHAND_SPECIAL )
-
-				if ( CustomTitans.Core == "mp_titancore_upgrade" )
-					thread MonarchUpgrades( titan )
-
-				if ( CustomTitans.CoreMods.len() )
-				{
-					entity weapon = titan.GetOffhandWeapon( OFFHAND_SPECIAL )
-
-					if ( IsValid( weapon ) )
-					{
-						array<string> mods = weapon.GetMods()
-
-						mods.extend( CustomTitans.CoreMods )
-
-						weapon.SetMods( mods )
-					}
-				}
-			}
-
-			if ( CustomTitans.Melee != "" )
-			{
-				titan.GiveOffhandWeapon( CustomTitans.Melee, OFFHAND_MELEE )
-
-				if ( CustomTitans.MeleeMods.len() )
-				{
-					entity weapon = titan.GetOffhandWeapon( OFFHAND_MELEE )
-
-					if ( IsValid( weapon ) )
-					{
-						array<string> mods = weapon.GetMods()
-
-						mods.extend( CustomTitans.MeleeMods )
-
-						weapon.SetMods( mods )
-					}
-				}
-			}
-
-			entity soul = titan.GetTitanSoul()
-
-			if ( IsValid( soul ) )
-			{
-				if ( CustomTitans.TitanExecutionRef != "" )
-					soul.soul.titanLoadout.titanExecution = CustomTitans.TitanExecutionRef
-
-				if ( CustomTitans.Passives.len() )
-					foreach ( int passive in CustomTitans.Passives )
-						GivePassive( soul, passive )
-			}
-		}
-		else
+		if ( !( titan in file.CustomTitanUID && CustomTitans.UID == file.CustomTitanUID[ titan ] ) )
 		{
 			switch ( GetTitanCharacterName( titan ) )
 			{
@@ -2259,35 +2106,31 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
 						soul.soul.titanLoadout.titanExecution = "execution_vanguard"
 
 						if ( CoinFlip() )
-						{
 							GivePassive( soul, ePassives.PAS_VANGUARD_COREMETER )
-
-							soul.soul.titanLoadout.titanExecution = "execution_vanguard_kit"
-						}
 
 						if ( !SoulHasPassive( soul, ePassives.PAS_VANGUARD_COREMETER ) && CoinFlip() )
 							GivePassive( soul, ePassives.PAS_VANGUARD_DOOM )
 					}
 					break
 			}
+
+			if ( GetCurrentPlaylistVarInt( "aegis_upgrades", 0 ) == 1 )
+			{
+				titan.SetMaxHealth( min( MAX_HEALTH - 1, titan.GetMaxHealth() + 2500 ) )
+				titan.SetHealth( titan.GetMaxHealth() )
+			}
 		}
 
-		if ( GetCurrentPlaylistVarInt( "aegis_upgrades", 0 ) == 1 )
-		{
-			titan.SetMaxHealth( min( MAX_HEALTH - 1, titan.GetMaxHealth() + 2500 ) )
-			titan.SetHealth( titan.GetMaxHealth() )
-		}
-
-		bool hasnucleareject = false
+		bool hasNuclearEeject = false
 
 		if ( RandomInt( 100 ) < 25 )
 		{
-			hasnucleareject = true
+			hasNuclearEeject = true
 
 			NPC_SetNuclearPayload( titan )
 		}
 
-		if ( !hasnucleareject && RandomInt( 100 ) < 15 )
+		if ( !hasNuclearEeject && RandomInt( 100 ) < 15 )
 			file.autoEject[ titan ] <- true
 	}
 }

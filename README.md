@@ -2,34 +2,9 @@
 
 [Discord server](https://ds.asillyneko.dev)
 
-Use this to make sure the server doesn't crash by too many props
-
-- `sv_max_props_multiplayer 500000`
-- `sv_max_prop_data_dwords_multiplayer 800000`
-
 ## Playlistvars
 
-`squad_count` Squads per team * 4. Default 4
-
-`spectre_count` Spectres per team. Default 12
-
-`reaper_count` Reapers per team. Default 2
-
-`piloted_titan_count` Max piloted titan count. Default 3
-
-`piloted_titan_ramp_up_score` Piloted titan ramp up, score `500` score = `1` titan `650` score = `2` titans and so on. Default 150
-
-`unpiloted_titan_count` Max unpiloted titan count. Default 0
-
-`unpiloted_titan_ramp_up_score` unpiloted titan ramp up, score `500` score = `1` titan `650` score = `2` titans and so on. Default 150
-
-`spectre_spawn_score` Spectre spawn score. Default 125
-
-`stalker_spawn_score` Stalker spawn score. Defualt 380
-
-`reaper_spawn_score` Reaper spawn score. Default 500
-
-`titan_spawn_score` Titan spawn score. Default 500
+[Playlistvars](mod/scripts/vscripts/attrition_extended_recode_playlistvars.nut)
 
 ## Custom Titans
 
@@ -46,31 +21,51 @@ void function AttritionExtendedRecode_CustomTitanExample_Init()
 
 	CustomTitan.Title = "ASillyNeko"
 	CustomTitan.TitanSetFile = "titan_atlas_vanguard"
-	CustomTitan.TitanAiSet = "npc_titan_auto_atlas_vanguard"
-	CustomTitan.TitanBehavior = ""
-	CustomTitan.EmbarkedTitanAiSet = "npc_titan_atlas_vanguard"
-	CustomTitan.EmbarkedTitanBehavior = "behavior_titan_long_range"
-	CustomTitan.TitanExecutionRef = "execution_vanguard_kit"
 	CustomTitan.Camo = 138
 	CustomTitan.Skin = 2
 	CustomTitan.AllowedWithPilot = true
 	CustomTitan.AllowedWithoutPilot = false
-	CustomTitan.Melee = "melee_titan_punch"
-	CustomTitan.MeleeMods = []
-	CustomTitan.Weapon = "mp_titanweapon_xo16_vanguard"
-	CustomTitan.WeaponMods = []
-	CustomTitan.Ordnance = "mp_titanweapon_salvo_rockets"
-	CustomTitan.OrdnanceMods = []
-	CustomTitan.Utility = "mp_titanability_rearm"
-	CustomTitan.UtilityMods = []
-	CustomTitan.Tactical = "mp_titanweapon_stun_laser"
-	CustomTitan.TacticalMods = []
-	CustomTitan.Core = "mp_titancore_upgrade"
-	CustomTitan.CoreMods = []
-	CustomTitan.Passives = [ ePassives.PAS_VANGUARD_COREMETER ]
+	CustomTitan.BeforeSpawn = AttrritionExtendedRecode_CustomTitanExample_BeforeSpawn
+	CustomTitan.AfterSpawn = AttrritionExtendedRecode_CustomTitanExample_AfterSpawn
+	CustomTitan.DisembarkTitan = AttrritionExtendedRecode_CustomTitanExample_DisembarkTitan
+	CustomTitan.EmbarkTitan = AttrritionExtendedRecode_CustomTitanExample_EmbarkTitan
 	CustomTitan.HP = -1 // Max is MAX_HEALTH( 524287 ) and min is 1
 
 	AttritionExtendedRecode_AddCustomTitan( CustomTitan )
+}
+
+void function AttrritionExtendedRecode_CustomTitanExample_BeforeSpawn( entity titan )
+{
+	SetSpawnOption_AISettings( titan, "npc_titan_auto_atlas_vanguard" )
+}
+
+void function AttrritionExtendedRecode_CustomTitanExample_AfterSpawn( entity titan )
+{
+	titan.GiveWeapon( "mp_titanweapon_xo16_vanguard" )
+	titan.GiveOffhandWeapon( "mp_titanweapon_salvo_rockets", OFFHAND_ORDNANCE )
+	titan.GiveOffhandWeapon( "mp_titancore_upgrade", OFFHAND_EQUIPMENT )
+	titan.GiveOffhandWeapon( "mp_titanability_rearm", OFFHAND_ANTIRODEO )
+	titan.GiveOffhandWeapon( "mp_titanweapon_stun_laser", OFFHAND_SPECIAL )
+	titan.GiveOffhandWeapon( "melee_titan_punch", OFFHAND_MELEE )
+
+	entity soul = titan.GetTitanSoul()
+
+	if ( IsValid( soul ) )
+	{
+		soul.soul.titanLoadout.titanExecution = "execution_vanguard"
+
+		GivePassive( soul, ePassives.PAS_VANGUARD_COREMETER )
+	}
+}
+
+void function AttrritionExtendedRecode_CustomTitanExample_DisembarkTitan( entity titan )
+{
+}
+
+void function AttrritionExtendedRecode_CustomTitanExample_EmbarkTitan( entity titan )
+{
+	titan.SetAISettings( "npc_titan_atlas_vanguard" )
+	titan.SetBehaviorSelector( "behavior_titan_long_range" )
 }
 ```
 
