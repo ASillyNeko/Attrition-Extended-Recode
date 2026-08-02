@@ -117,6 +117,8 @@ void function DefconHandle()
 		string defcon = team == TEAM_MILITIA ? "IMCdefcon" : "MILdefcon"
 		int currentDefCon = GetGlobalNetInt( defcon )
 
+		team = GetOtherTeam( team )
+
 		switch ( currentDefCon )
 		{
 			case 0:
