@@ -192,10 +192,6 @@ void function Spawner( int team )
 {
 	while ( IsAutoPopulateEnabled( team ) )
 	{
-		bool inGracePeriod = GameTime_PlayingTime() < START_SPAWN_GRACE_PERIOD
-		bool inGameState = GetGameState() <= eGameState.Prematch || GetGameState() == eGameState.SwitchingSides
-		bool useStartSpawn = inGameState || inGracePeriod
-
 		int pilotedTitansToSpawn = 0
 		int unpilotedTitansToSpawn = 0
 		int currentPilotedTitanScore = GameRules_GetTeamScore( GetOtherTeam( team ) )
@@ -221,7 +217,7 @@ void function Spawner( int team )
 
 		if ( AttritionExtendedRecode_SpawnedPilotedTitans( team ) < pilotedTitansToSpawn )
 		{
-			AttritionExtendedRecode_SpawnPilotWithTitan( team, useStartSpawn )
+			AttritionExtendedRecode_SpawnPilotWithTitan( team )
 
 			wait RandomFloatRange( 2.5, 3 )
 
@@ -231,7 +227,7 @@ void function Spawner( int team )
 
 		if ( AttritionExtendedRecode_SpawnedUnPilotedTitans( team ) < unpilotedTitansToSpawn )
 		{
-			AttritionExtendedRecode_SpawnTitan( team, false, useStartSpawn )
+			AttritionExtendedRecode_SpawnTitan( team )
 
 			wait RandomFloatRange( 2.5, 3 )
 
@@ -1365,15 +1361,15 @@ void function TitanSmokescreen( entity ent )
 	Smokescreen( smokescreen )
 }
 
-void function AttritionExtendedRecode_SpawnPilotWithTitan( int team, bool introSpawnPoints = false )
+void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
 {
 	if ( !IsNewThread() )
 	{
-		thread AttritionExtendedRecode_SpawnPilotWithTitan( team, introSpawnPoints )
+		thread AttritionExtendedRecode_SpawnPilotWithTitan( team )
 		return
 	}
 
-	entity spawnpoint = GetSpawnpoint( team, introSpawnPoints )
+	entity spawnpoint = GetSpawnpoint( team )
 
 	if ( !IsValid( spawnpoint ) )
 		return
@@ -1444,15 +1440,15 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team, bool introS
 		ToggleSpawnNodeInUse( spawnpoint, false )
 }
 
-void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = false, bool introSpawnPoints = false )
+void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = false )
 {
 	if ( !IsNewThread() )
 	{
-		thread AttritionExtendedRecode_SpawnTitan( team, withpilot, introSpawnPoints )
+		thread AttritionExtendedRecode_SpawnTitan( team, withpilot )
 		return
 	}
 
-	entity spawnpoint = GetSpawnpoint( team, introSpawnPoints )
+	entity spawnpoint = GetSpawnpoint( team )
 
 	if ( !IsValid( spawnpoint ) )
 		return
@@ -1601,31 +1597,11 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 		ToggleSpawnNodeInUse( spawnpoint, false )
 }
 
-entity function GetSpawnpoint( int team, bool introSpawnPoints )
+entity function GetSpawnpoint( int team )
 {
-	array<entity> points = SpawnPoints_GetTitan()
+	array<entity> spawnPoints = SpawnPoints_GetTitan()
 
-	if ( introSpawnPoints )
-		points = NSSpawnPoints_GetTitanStart( team )
-
-	array<entity> spawns = points
-	array<entity> validspawns
-
-	foreach ( entity spawnpoint in spawns )
-		if ( IsSpawnpointValid( spawnpoint, team ) )
-			validspawns.append( spawnpoint )
-
-	if ( !validspawns.len() )
-		foreach ( entity spawnpoint in spawns )
-			if ( IsSpawnpointValid( spawnpoint, team, true ) )
-				validspawns.append( spawnpoint )
-
-	if ( !validspawns.len() )
-		foreach ( entity spawnpoint in spawns )
-			if ( IsSpawnpointValid( spawnpoint, team, true, true ) )
-				validspawns.append( spawnpoint )
-
-	return validspawns.len() ? validspawns.getrandom() : null
+	return GetFrontlineSpawnPoint( spawnPoints, team )
 }
 
 void function DropPodOpenDoorModded( entity pod, entity door )
