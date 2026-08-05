@@ -1409,7 +1409,7 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
 
 	pilot.SetModel( file.pilotModels.getrandom() )
 	pilot.SetParent( pod, "ATTACH", false )
-	pilot.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
+	pilot.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
 	pilot.SetInvulnerable()
 	pilot.kv.contents = ( int( pilot.kv.contents ) | CONTENTS_NOGRAPPLE )
 	pilot.EnableNPCFlag( NPC_IGNORE_ALL )
@@ -1479,7 +1479,7 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 	pilot.kv.WeaponProficiency = eWeaponProficiency.GOOD // eWeaponProficiency.VERYGOOD
 	pilot.SetModel( file.pilotModels.getrandom() )
 	pilot.EnableNPCFlag( NPC_IGNORE_ALL )
-	pilot.kv.VisibilityFlags = ~ENTITY_VISIBLE_TO_EVERYONE
+	pilot.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
 
 	array<string> settingsArray = GetAllowedTitanAISettings()
 	bool usedomeshieldwarpfall = false
