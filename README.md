@@ -1,6 +1,6 @@
 # Attrition Extended Recode
 
-[Discord server](https://ds.asillyneko.dev)
+[Discord Server](https://ds.asillyneko.dev)
 
 ## Playlistvars
 
