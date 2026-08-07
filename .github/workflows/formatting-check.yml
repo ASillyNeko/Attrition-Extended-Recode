@@ -13,8 +13,8 @@ jobs:
           persist-credentials: false
       - name: Download sqformat
         run: |
-          curl -sSL https://github.com/Bobbyperson/sqformat/releases/download/v1.2.0/sqformat-linux-x86_64 -o sqformat
-          echo "d584cb738c3fa3fa467d64e5bd009a4819284b4fca18864697a7904ed2b3d253bdd026b23cc4baccd4e59f4562a1c4ef59fcbe3a525d3d3dbc261cd2566603a3  sqformat" | sha512sum -c -
+          curl -sSL https://github.com/Bobbyperson/sqformat/releases/download/v1.2.1/sqformat-linux-x86_64 -o sqformat
+          echo "c3bb50151aa3c699373c96ee39033731cbac53b387885717aca1e96bb46df4d0495e6612157bfec08f6cc153b77276f4d28ffd771333dc9cf1a422da57f213dd  sqformat" | sha512sum -c -
           chmod +x sqformat
 
       - name: Check formatting
