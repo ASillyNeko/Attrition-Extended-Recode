@@ -1,26 +1,24 @@
 {
 	"Name": "Neko's Attrition Extended Recode",
 	"Description": "Attrition Extended without crashes.",
-	"Version": "1.2.3",
+	"Version": "1.2.4",
 	"LoadPriority": 20,
-	"Dependencies": {
-		"AIRBORNE_EXECUTIONS_THING": "Airborne Executions"
-	},
 	"Scripts": [
 		{
-			"Path": "karma_airborne_execution_attritionextendedrecode.nut",
-			"RunOn": "CLIENT || SERVER"
+			"Path": "attrition_extended_recode_stuff.nut",
+			"RunOn": "SERVER && MP",
+			"ServerCallback": {
+				"After": "AttritionExtendedRecode_Init"
+			}
 		},
 		{
-			"Path": "attrition_extended_recode_stuff.nut",
-			"RunOn": "CLIENT || SERVER",
-			"ServerCallback":
-			{
-				"After": "AttritionExtendedRecode_Init"
+			"Path": "attrition_extended_recode_playlistvars.nut",
+			"RunOn": "MP",
+			"ServerCallback": {
+				"After": "AttritionExtendedRecodePlaylistvars_Init"
 			},
-			"ClientCallback":
-			{
-				"After": "AttritionExtendedRecode_Init"
+			"ClientCallback": {
+				"After": "AttritionExtendedRecodePlaylistvars_Init"
 			}
 		}
 	]

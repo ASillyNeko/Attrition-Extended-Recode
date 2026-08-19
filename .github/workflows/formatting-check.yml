@@ -1,0 +1,21 @@
+name: Check Formatting
+
+on: [ push, pull_request ]
+
+permissions: {}
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - name: Download sqformat
+        run: |
+          curl -sSL https://github.com/Bobbyperson/sqformat/releases/download/v1.2.1/sqformat-linux-x86_64 -o sqformat
+          echo "c3bb50151aa3c699373c96ee39033731cbac53b387885717aca1e96bb46df4d0495e6612157bfec08f6cc153b77276f4d28ffd771333dc9cf1a422da57f213dd  sqformat" | sha512sum -c -
+          chmod +x sqformat
+
+      - name: Check formatting
+        run: ./sqformat -dr .
