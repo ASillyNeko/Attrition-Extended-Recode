@@ -626,7 +626,7 @@ entity function AttritionExtendedRecode_NpcTitanBecomesPilot( entity titan )
 	else
 		pilot.SetModel( file.pilotModels.getrandom() )
 
-	TakeWeaponsForArray( pilot, pilot.GetMainWeapons() )
+	TakeAllWeapons( pilot )
 
 	bool gaveweapon = false
 
@@ -718,7 +718,7 @@ entity function CreatePilotMinimap( entity npc )
 
 	file.isAttritionExtendedRecodeEntity[ pilotMiniMap ] <- true
 
-	TakeWeaponsForArray( pilotMiniMap, pilotMiniMap.GetMainWeapons() )
+	TakeAllWeapons( pilotMiniMap )
 
 	pilotMiniMap.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
 	pilotMiniMap.Hide()
@@ -773,7 +773,7 @@ void function DestroyPilotMiniMapOnPilotDeath( entity npc, entity pilotMiniMap )
 
 void function RandomPilotWeapons( entity pilot )
 {
-	TakeWeaponsForArray( pilot, pilot.GetMainWeapons() )
+	TakeAllWeapons( pilot )
 
 	pilot.GiveWeapon( file.pilotWeapons.getrandom() )
 	pilot.GiveWeapon( file.pilotAntiTitanWeapons.getrandom() )
@@ -1970,13 +1970,7 @@ void function AutoTitanLoadout( entity titan, AttritionExtendedRecode_CustomTita
 {
 	if ( IsValid( titan ) )
 	{
-		TakeWeaponsForArray( titan, titan.GetMainWeapons() )
-
-		titan.TakeOffhandWeapon( OFFHAND_ORDNANCE )
-		titan.TakeOffhandWeapon( OFFHAND_SPECIAL )
-		titan.TakeOffhandWeapon( OFFHAND_ANTIRODEO )
-		titan.TakeOffhandWeapon( OFFHAND_EQUIPMENT )
-		titan.TakeOffhandWeapon( OFFHAND_MELEE )
+		TakeAllWeapons( titan )
 
 		if ( !( titan in file.CustomTitanUID && CustomTitans.UID == file.CustomTitanUID[ titan ] ) )
 		{

@@ -987,7 +987,7 @@ function MeleeSyncedHumanShared_Init()
 		decoy.SetOwner( ent )
 		decoy.SetInvulnerable()
 
-		TakeWeaponsForArray( decoy, decoy.GetMainWeapons() )
+		TakeAllWeapons( decoy )
 
 		SetupPropDecoy( ent, decoy )
 		HoloPilot_Execution_DecoySetup( decoy )
