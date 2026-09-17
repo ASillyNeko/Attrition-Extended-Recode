@@ -1369,6 +1369,8 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
 		thread AttritionExtendedRecode_SpawnPilotWithTitan( team )
 		return
 	}
+	else
+		WaitEndFrame() // needs a delay otherwise spawning the droppod door script errors
 
 	entity spawnpoint = GetSpawnpoint( team )
 
@@ -1379,10 +1381,11 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
 
 	ToggleSpawnNodeInUse( spawnpoint, true )
 
-	vector pos = spawnpoint.GetOrigin()
+	vector origin = spawnpoint.GetOrigin()
 	vector angles = spawnpoint.GetAngles()
-	entity pod = CreateDropPod( pos, angles )
-	entity poddoor = DropPodDoor( pod )
+	entity dropPod = CreatePropDynamic( $"models/vehicle/droppod_fireteam/droppod_fireteam.mdl" )
+
+	InitFireteamDropPod( dropPod, eDropPodFlag.DISSOLVE_AFTER_DISEMBARKS )
 
 	AttritionExtendedRecode_CustomTitanStruct CustomTitan = AttritionExtendedRecode_CustomTitanEmpty()
 
@@ -1391,7 +1394,7 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
 
 	entity pilot = CreateEntity( "npc_pilot_elite" )
 
-	pilot.SetOrigin( pos )
+	pilot.SetOrigin( origin )
 
 	DispatchSpawn( pilot )
 
@@ -1407,7 +1410,7 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
 	PilotSpeedFlagsHPAndBehavior( pilot )
 
 	pilot.SetModel( file.pilotModels.getrandom() )
-	pilot.SetParent( pod, "ATTACH", false )
+	pilot.SetParent( dropPod, "ATTACH", false )
 	pilot.kv.VisibilityFlags = ENTITY_VISIBLE_TO_NOBODY
 	pilot.SetInvulnerable()
 	pilot.kv.contents = ( int( pilot.kv.contents ) | CONTENTS_NOGRAPPLE )
@@ -1421,21 +1424,20 @@ void function AttritionExtendedRecode_SpawnPilotWithTitan( int team )
 	else
 		pilot.SetTitle( "Pilot" )
 
-	thread AttritionExtendedRecode_NpcPilotCallsInAndEmbarksTitan( pilot, pos, angles, CustomTitan )
-	waitthread LaunchAnimDropPod( pod, "pod_testpath", pos, angles )
+	thread AttritionExtendedRecode_NpcPilotCallsInAndEmbarksTitan( pilot, origin, angles, CustomTitan )
+	waitthread LaunchAnimDropPod( dropPod, "pod_testpath", origin, angles )
 
 	if ( IsValid( pilot ) )
 	{
 		pilot.kv.VisibilityFlags = ENTITY_VISIBLE_TO_EVERYONE
 		pilot.Unfreeze()
-		pilot.SetOrigin( pod.GetOrigin() )
-		pilot.SetAngles( pod.GetAngles() )
+		pilot.SetOrigin( dropPod.GetOrigin() )
+		pilot.SetAngles( dropPod.GetAngles() )
 
 		thread PilotMiniMap( pilot )
 	}
 
-	DropPodOpenDoorModded( pod, poddoor )
-	ActivateFireteamDropPodModded( pod, pilot, poddoor )
+	ActivateFireteamDropPod( dropPod, [ pilot ] )
 
 	if ( IsValid( spawnpoint ) )
 		ToggleSpawnNodeInUse( spawnpoint, false )
@@ -1448,6 +1450,8 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 		thread AttritionExtendedRecode_SpawnTitan( team, withpilot )
 		return
 	}
+	else
+		WaitEndFrame() // needs a delay otherwise spawning the droppod door script errors
 
 	entity spawnpoint = GetSpawnpoint( team )
 
@@ -1603,101 +1607,6 @@ entity function GetSpawnpoint( int team )
 	array<entity> spawnPoints = SpawnPoints_GetTitan()
 
 	return GetFrontlineSpawnPoint( spawnPoints, team )
-}
-
-void function DropPodOpenDoorModded( entity pod, entity door )
-{
-	door.ClearParent()
-	door.SetVelocity( door.GetForwardVector() * 500 )
-
-	EmitSoundOnEntity( pod, "droppod_door_open" )
-}
-
-void function DestroyPod( entity pod, entity door )
-{
-	pod.Dissolve( ENTITY_DISSOLVE_CORE, Vector( 0, 0, 0 ), 500 )
-	door.Dissolve( ENTITY_DISSOLVE_CORE, Vector( 0, 0, 0 ), 500 )
-}
-
-entity function DropPodDoor( entity pod )
-{
-	string attachment = "hatch"
-	int attachIndex = pod.LookupAttachment( attachment )
-	vector origin = pod.GetAttachmentOrigin( attachIndex )
-	vector angles = pod.GetAttachmentAngles( attachIndex )
-
-	entity prop_physics = CreateEntity( "prop_physics" )
-
-	SetTargetName( prop_physics, "door" + UniqueString() )
-
-	prop_physics.SetValueForModelKey( $"models/vehicle/droppod_fireteam/droppod_fireteam_door.mdl" )
-
-	prop_physics.kv.spawnflags = 261
-	prop_physics.kv.fadedist = -1
-	prop_physics.kv.physdamagescale = 0.1
-	prop_physics.kv.inertiaScale = 1.0
-	prop_physics.kv.renderamt = 0
-	prop_physics.kv.rendercolor = "255 255 255"
-
-	prop_physics.SetOrigin( origin )
-	prop_physics.SetAngles( angles )
-	prop_physics.SetParent( pod, "HATCH", false )
-	prop_physics.MarkAsNonMovingAttachment()
-
-	return prop_physics
-}
-
-void function ActivateFireteamDropPodModded( entity pod, entity pilot, entity poddoor )
-{
-	array<string> exitAnims = [ "pt_dp_exit_a", "pt_dp_exit_b", "pt_dp_exit_c", "pt_dp_exit_d" ]
-	array<string> idleAnims = [ "pt_dp_idle_a", "pt_dp_idle_b", "pt_dp_idle_c", "pt_dp_idle_d" ]
-
-	int animIndex = RandomIntRange( 0, exitAnims.len() - 1 )
-
-	SetAnim( pilot, "drop_pod_exit_anim", exitAnims[ animIndex ] )
-	SetAnim( pilot, "drop_pod_idle_anim", idleAnims[ animIndex ] )
-
-	if ( IsAlive( pilot ) )
-	{
-		pilot.MakeVisible()
-
-		entity weapon = pilot.GetActiveWeapon()
-
-		if ( IsValid( weapon ) )
-			weapon.MakeVisible()
-
-		thread GuyHangsInPod( pilot, pod, poddoor )
-	}
-	else
-		thread DestroyPod( pod, poddoor )
-}
-
-void function GuyHangsInPod( entity guy, entity pod, entity poddoor )
-{
-	guy.EndSignal( "OnDeath" )
-	guy.EndSignal( "OnDestroy" )
-
-	OnThreadEnd(
-		function() : ( pod, poddoor )
-		{
-			thread DestroyPod( pod, poddoor )
-		}
-	)
-
-	string exitAnim = expect string( GetAnim( guy, "drop_pod_exit_anim" ) )
-	bool exitAnimExists = guy.LookupSequence( exitAnim ) != -1
-
-	guy.SetParent( pod, "ATTACH", false )
-
-	if ( exitAnimExists )
-		guy.Anim_ScriptedPlay( exitAnim )
-
-	guy.ClearParent()
-
-	if ( exitAnimExists )
-		WaittillAnimDone( guy )
-
-	guy.Signal( "npc_deployed" )
 }
 
 void function NPCTitanHotdropsWarpfall( entity titan, bool standImmediately, string titanfallAnim = "at_hotdrop_drop_2knee_turbo_upgraded" )
