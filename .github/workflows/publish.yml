@@ -4,18 +4,26 @@ on:
   release:
     types:
       - published
-    
+
+permissions: {}
+
 env:
   name: ${{ github.event.repository.name }}
 
 jobs:
   verify:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        env:
+          Ref_Name: ${{ github.ref_name }}
+        with:
+          persist-credentials: false
       - name: Get clean version
         run: |
-          echo cleanVersion=$(echo ${{ github.ref_name }} | sed s/v//g) >> $GITHUB_ENV
+          echo cleanVersion=$(echo $Ref_Name | sed s/v//g) >> $GITHUB_ENV
+
       - name: Check that version matches
         run: |
           if [[ "$(grep -Po "\d+\.\d+\.\d+" $(find ./ -name mod.json))" != "$cleanVersion" ]]; then
@@ -24,13 +32,17 @@ jobs:
             echo "::error::Version in mod.json does not match tag version"
             exit 1
           fi
+
   publish:
     runs-on: ubuntu-latest
     needs: verify
+
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
       - name: Upload Thunderstore Package
-        uses: GreenTF/upload-thunderstore-package@v4.3
+        uses: GreenTF/upload-thunderstore-package@aef20d7e07a0858d0decae64872aa5526662ab8d # v4.3
         with:
           community: northstar
 
