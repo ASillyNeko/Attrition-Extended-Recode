@@ -1563,7 +1563,7 @@ void function AttritionExtendedRecode_SpawnTitan( int team, bool withpilot = fal
 	}
 	else
 	{
-		int randomtitancamo = RandomIntRange( 0, 160 )
+		int randomtitancamo = RandomInt( 160 )
 
 		titan.SetSkin( 2 )
 		titan.SetCamo( randomtitancamo )
@@ -1749,7 +1749,7 @@ entity function AttritionExtendedRecode_NpcPilotCallsInTitan( entity pilot, vect
 
 	if ( ( CustomTitan.Camo == -1 && CustomTitan.Skin == -1 ) || !CustomTitan.AllowedWithPilot )
 	{
-		int randomtitancamo = RandomIntRange( 0, 160 )
+		int randomtitancamo = RandomInt( 160 )
 
 		titan.SetSkin( 2 )
 		titan.SetCamo( randomtitancamo )
